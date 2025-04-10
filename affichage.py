@@ -67,7 +67,7 @@ while running:
                     screen.blit(multiplier_text[3], (col+10, row+5))
                 
     # type_chart(donnees.type_chart)
-    type_chart(test)
+    type_chart(donnees.type_chart)
     
 
     pygame.display.flip()
