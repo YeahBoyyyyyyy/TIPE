@@ -12,7 +12,7 @@ font = pygame.font.Font(None, 20)
 
 screen = pygame.display.set_mode((900, 600))
 
-image = pygame.image.load("type chart icons.png").convert_alpha()
+image = pygame.image.load("assets/type chart icons.png").convert_alpha()
 
 table = IA.generateTypeChart()
 
