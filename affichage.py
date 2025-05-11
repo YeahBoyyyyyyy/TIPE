@@ -14,6 +14,8 @@ screen = pygame.display.set_mode((900, 600))
 
 image = pygame.image.load("type chart icons.png").convert_alpha()
 
+table = IA.generateTypeChart()
+
 l,h = 45,21
 
 rect_x, rect_y = 9+l, 5+h 
@@ -66,8 +68,10 @@ while running:
                     pygame.draw.rect(screen, (14,209,69), (col, row, rect_pattern_width, rect_pattern_height))
                     screen.blit(multiplier_text[3], (col+10, row+5))
                 
+    
     # type_chart(donnees.type_chart)
-    type_chart(donnees.type_chart)
+    
+    type_chart(table)
     
 
     pygame.display.flip()

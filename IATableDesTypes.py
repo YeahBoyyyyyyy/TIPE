@@ -3,6 +3,21 @@ import matplotlib.pyplot as plt
 from enum import IntEnum
 import random
 import donnees
+from copy import deepcopy
+
+class bcolors:
+    OKWHITE = '\033[97m'
+    OKBLACK = '\033[30m'
+    OKPURPLE = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNBOLD = '\033[22m'
+    UNDERLINE = '\033[4m'
 
 NUMBER_OF_ATTACKS = 4
 ZERO = 0
@@ -16,6 +31,133 @@ def randomType():
 # Genère une attaque simple de 50 de puissance, d'un certain type et sans effets spéciaux 
 def simpleAttack():
     return (50, randomType())
+
+# Création d'un pokémon très simple avec juste des points de vie (de base 200), 
+# un type (au hasard de base) et des attaques (au hasard de base)
+class simplepokemon():
+    def __init__(self, name="Null", hp=200, type=None, attacks=None, fitness=0):
+        if type is None:
+            type = randomType()
+        if attacks is None:
+            attacks = [simpleAttack() for i in range(NUMBER_OF_ATTACKS)]
+        
+        self.name = name
+        self.hp = hp
+        self.type = type
+        self.attacks = attacks
+        self.fitness = fitness
+        self.type_chart = generateTypeChart()
+    def __call__(self):
+        return self.name, self.hp, self.type, self.attacks, self.fitness
+    def __str__(self): 
+        return f"{self.name} (HP: {self.hp}, Type: {self.type}, Attacks: {self.attacks})"
+    def __deepcopy__(self):
+        return simplepokemon(self.name, self.hp, self.type, self.attacks.copy(), self.fitness)
+ 
+
+def damageSingleType(attack_used, pokemon_damaged):
+    pokemon_damaged.hp = pokemon_damaged.hp - attack_used[0]*mono_type_attack_effectiveness(attack_used[1], pokemon_damaged.type)
+    return pokemon_damaged
+
+def mono_type_attack_effectiveness(offensive_type, defensive_type):
+    ID_offensive_type = donnees.POKEMON_TYPES_ID[str(offensive_type)]
+    ID_defensive_type = donnees.POKEMON_TYPES_ID[str(defensive_type)]
+    return donnees.type_chart[ID_offensive_type][ID_defensive_type]
+
+# Génération d'une table des types totalement aléatoire 
+def generateTypeChart():
+    values = [0, 0.5, 1, 2]
+    weights = [0.05, 0.20, 0.55, 0.20]
+
+    matrix = [[random.choices(values, weights)[0] for _ in range(18)] for _ in range(18)]
+    
+    return matrix
+
+Pikachu = simplepokemon("Pikachu",200, "Electric", [(50, "Electric"), (50, "Steel"), (50, "Normal"), (50, "Ground")])
+
+Dracaufeu = simplepokemon("Dracaufeu",200, "Fire", [(50, "Ground"), (50, "Ice"), simpleAttack(), simpleAttack()])
+
+
+# les inputs seraient : 
+# - les types du pokémon en face 
+# - Les attaques du pokémon joué : type et puissance
+# - Pas encore le type du pokémon joué (on ne considère pas le STAB encore)
+
+#Pour l'IA sur la table des types, il faudrait générer une génération de pokémon (avec une capacité ?),
+
+
+## Foncion pour faire combattre un pokémon contre un autre pokémon
+
+def simplePokemonWeakness(pokemon, typechart):
+    type = pokemon.type
+    weakness = []
+    for i in range(18):
+        if typechart[i][donnees.POKEMON_TYPES_ID[type]] == 2:
+            weakness.append(donnees.POKEMON_TYPES[i])
+    return weakness
+
+def selectAttack(pokemon, opponent):
+    # Choisir une attaque en fonction de la faiblesse du pokémon adverse
+    weaknesses = simplePokemonWeakness(opponent, pokemon.type_chart)
+    for attack in pokemon.attacks:
+        if attack[1] in weaknesses:
+            return attack
+    # Si aucune attaque ne correspond à la faiblesse, choisir une attaque aléatoire
+    return pokemon.attacks[random.randint(0, NUMBER_OF_ATTACKS-1)]
+
+def fight(pokemon1, pokemon2):
+    print(pokemon2())
+
+    while pokemon1.hp > 0 and pokemon2.hp > 0:
+        
+        attack_used = selectAttack(pokemon1, pokemon2)  # Choisir une attaque en fonction de la faiblesse du pokémon adverse
+        damageSingleType(attack_used, pokemon2)
+        pokemon1.fitness += (attack_used[0] * mono_type_attack_effectiveness(attack_used[1], pokemon2.type))/10  # Gain fitness for dealing damage
+        
+        # Print the description of the attack used with colored pokemon names to the text
+        print(f"{bcolors.OKBLUE}{pokemon1.name}{bcolors.ENDC} used {attack_used[1]} attack on {bcolors.OKGREEN}{pokemon2.name}." + bcolors.ENDC)
+
+        if pokemon2.hp <= 0:
+            print(f"{bcolors.OKBLACK}{pokemon2.name} fainted!" + bcolors.ENDC)
+            pokemon1.fitness += 100  # Gain fitness for knocking out the opponent
+            break
+
+        attack_used = pokemon2.attacks[random.randint(0, NUMBER_OF_ATTACKS-1)]
+        damageSingleType(attack_used, pokemon1)
+        
+        # Print the description of the attack used with colors to the text
+        print(f"{bcolors.OKGREEN}{pokemon2.name}{bcolors.ENDC} used {attack_used[1]} attack on {bcolors.OKBLUE}{pokemon1.name}." + bcolors.ENDC)
+
+        if pokemon1.hp <= 0:
+            print(f"{bcolors.OKGREEN}{pokemon1.name} fainted!" + bcolors.ENDC)
+            pokemon1.fitness -= 50  # Loss of fitness for being knocked out
+            break
+    
+    pokemon1.hp = 200  # Reset HP for the next fight
+
+    return pokemon1     
+
+    # Générer une liste de 20 pokémons différents
+
+for i in range(20):
+    fight(Dracaufeu, simplepokemon())
+    
+print(Dracaufeu())
+
+
+
+
+
+
+
+
+
+
+
+
+# Pour la création du choix des capacités par l'IA il faudrait
+# prendre en entrée tous les types du jeu mais les connexions qui seraient créées s'activerait seulement 
+# lorsque le pokémon en face est du type présent sur la connexion
 
 class complexAttack():
     def __init__(self, name="Null", power=50, attack_type="Normal", category="Physical", effects=None):
@@ -53,30 +195,11 @@ class complexAttack():
     def __call__(self):
         return self.name, self.power, self.attack_type, self.category, self.effects
 
-def damageSingleType(attack_used, pokemon_damaged):
-    pokemon_damaged.hp = pokemon_damaged.hp - attack_used[0]*mono_type_attack_effectiveness(attack_used[1], pokemon_damaged.type)
-    return pokemon_damaged
-
-def mono_type_attack_effectiveness(offensive_type, defensive_type):
-    ID_offensive_type = donnees.POKEMON_TYPES_ID[str(offensive_type)]
-    ID_defensive_type = donnees.POKEMON_TYPES_ID[str(defensive_type)]
-    return donnees.type_chart[ID_offensive_type][ID_defensive_type]
-
 def stab_attack(attack_used, pokemon):
     r = 1
     if attack_used[1] == pokemon.type:
         r = 1.5
     return r
-# Création d'un pokémon très simple avec juste des points de vie (de base 200), 
-# un type (au hasard de base) et des attaques (au hasard de base)
-class simplepokemon():
-    def __init__(self, name = "Null", hp = 200, type = randomType(), attacks = [simpleAttack() for i in range(NUMBER_OF_ATTACKS)]):
-        self.name = name
-        self.hp = hp
-        self.type = type
-        self.attacks = attacks
-    def __call__(self):
-        return self.name, self.hp, self.type, self.attacks
 
 class complexpokemon():
     def __init__(self, name="Null", hp=200, type=randomType(), attacks=[simpleAttack() for i in range(NUMBER_OF_ATTACKS)], abilities=[], level=1, experience=0, stats=None, status=None, nature=None, held_item=None):
@@ -120,49 +243,3 @@ class complexpokemon():
             "nature": self.nature,
             "held_item": self.held_item,
         }
-
-# Génération d'une table des types totalement aléatoire 
-def generateTypeChart():
-    values = [0, 0.5, 1, 2]
-    weights = [0.05, 0.20, 0.55, 0.20]
-
-    matrix = [[random.choices(values, weights)[0] for _ in range(18)] for _ in range(18)]
-    
-    return matrix
-
-Pikachu = simplepokemon("Pikachu",200, "Electric", [(50, "Electric"), (50, "Steel"), (50, "Normal"), (50, "Ground")])
-
-print(Pikachu())
-damageSingleType(Pikachu.attacks[3],Pikachu)
-print(Pikachu())
-
-# les inputs seraient : 
-# - les types du pokémon en face 
-# - Les attaques du pokémon joué : type et puissance
-# - Pas encore le type du pokémon joué (on ne considère pas le STAB encore)
-
-#Pour l'IA sur la table des types, il faudrait générer une génération de pokémon (avec une capacité ?),
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Pour la création du choix des capacités par l'IA il faudrait
-# prendre en entrée tous les types du jeu mais les connexions qui seraient créées s'activerait seulement 
-# lorsque le pokémon en face est du type présent sur la connexion
-
-
