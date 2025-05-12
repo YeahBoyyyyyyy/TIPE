@@ -55,8 +55,6 @@ class simplepokemon():
         return self.name, self.hp, self.type, self.attacks, self.fitness
     def __str__(self): 
         return f"{self.name} (HP: {self.hp}, Type: {self.type}, Attacks: {self.attacks})"
-    def __deepcopy__(self):
-        return simplepokemon(self.name, self.hp, self.type, self.attacks.copy(), self.fitness)
  
 
 def damageSingleType(attack_used, pokemon_damaged):
@@ -113,6 +111,14 @@ def simplePokemonNeutrality(pokemon, typechart):
             neutrality.append(donnees.POKEMON_TYPES[i])
     return neutrality
 
+def simplePokemonImmunities(pokemon, typechart):
+    type = pokemon.type
+    immunities = []
+    for i in range(18):
+        if typechart[i][donnees.POKEMON_TYPES_ID[type]] == 0:
+            immunities.append(donnees.POKEMON_TYPES[i])
+    return immunities
+
 def selectAttack(pokemon, opponent):
     # Choisir une attaque en fonction de la faiblesse du pokémon adverse
     weaknesses = simplePokemonWeakness(opponent, pokemon.type_chart)
@@ -133,14 +139,14 @@ def fight(pokemon1, pokemon2):
         
         attack_used = selectAttack(pokemon1, pokemon2)  # Choisir une attaque en fonction de la faiblesse du pokémon adverse
         damageSingleType(attack_used, pokemon2)
-        pokemon1.fitness += (attack_used[0] * mono_type_attack_effectiveness(attack_used[1], pokemon2.type))/10  # Gain fitness for dealing damage
+        pokemon1.fitness += (attack_used[0] * mono_type_attack_effectiveness(attack_used[1], pokemon2.type))  # Gain fitness for dealing damage
         
         # Print the description of the attack used with colored pokemon names to the text
         print(f"{bcolors.OKBLUE}{pokemon1.name}{bcolors.ENDC} used {attack_used[1]} attack on {bcolors.OKGREEN}{pokemon2.name}." + bcolors.ENDC)
 
         if pokemon2.hp <= 0:
             print(f"{bcolors.OKBLACK}{pokemon2.name} fainted!" + bcolors.ENDC)
-            pokemon1.fitness += 100  # Gain fitness for knocking out the opponent
+            pokemon1.fitness += 20  # Gain fitness for knocking out the opponent
             break
 
         attack_used = pokemon2.attacks[random.randint(0, NUMBER_OF_ATTACKS-1)]
@@ -160,7 +166,7 @@ def fight(pokemon1, pokemon2):
 
     # Générer une liste de 20 pokémons différents
 
-for i in range(20):
+for i in range(50):
     fight(Dracaufeu, simplepokemon())
     
 print(Dracaufeu())
