@@ -8,6 +8,12 @@ import donnees
 pygame.init()
 pygame.font.init()
 
+#### Utilisation du stock de données pour teste
+
+with open('stock.txt', 'r') as fichier:
+    matrix_from_file = [list(map(float, line.split())) for _,line in zip(range(18),fichier)]
+
+####
 font = pygame.font.Font(None, 20)
 
 screen = pygame.display.set_mode((900, 600))
@@ -71,7 +77,7 @@ while running:
     
     # type_chart(donnees.type_chart)
     
-    type_chart(table)
+    type_chart(matrix_from_file)
     
 
     pygame.display.flip()

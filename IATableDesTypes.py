@@ -3,12 +3,16 @@ import matplotlib.pyplot as plt
 from enum import IntEnum
 import random
 import donnees
-from copy import deepcopy
 
 class bcolors:
     OKWHITE = '\033[97m'
     OKBLACK = '\033[30m'
+    OKRED = '\033[91m'
+    OKORANGE = '\033[38;5;208m'
+    OKYELLOW = '\033[93m'
+    OKPINK = '\033[95m'
     OKPURPLE = '\033[95m'
+    OKMAGENTA = '\033[35m'
     OKBLUE = '\033[94m'
     OKCYAN = '\033[96m'
     OKGREEN = '\033[92m'
@@ -67,16 +71,13 @@ def mono_type_attack_effectiveness(offensive_type, defensive_type):
 # Génération d'une table des types totalement aléatoire 
 def generateTypeChart():
     values = [0, 0.5, 1, 2]
-    weights = [0.05, 0.20, 0.55, 0.20]
+    weights = [0.025, 0.2025, 0.55, 0.20]
 
     matrix = [[random.choices(values, weights)[0] for _ in range(18)] for _ in range(18)]
     
     return matrix
 
-Pikachu = simplepokemon("Pikachu",200, "Electric", [(50, "Electric"), (50, "Steel"), (50, "Normal"), (50, "Ground")])
-
 Dracaufeu = simplepokemon("Dracaufeu",200, "Fire", [(50, "Ground"), (50, "Ice"), simpleAttack(), simpleAttack()])
-
 
 # les inputs seraient : 
 # - les types du pokémon en face 
@@ -96,11 +97,31 @@ def simplePokemonWeakness(pokemon, typechart):
             weakness.append(donnees.POKEMON_TYPES[i])
     return weakness
 
+def simplePokemonResistance(pokemon, typechart):
+    type = pokemon.type
+    resistance = []
+    for i in range(18):
+        if typechart[i][donnees.POKEMON_TYPES_ID[type]] == 0.5:
+            resistance.append(donnees.POKEMON_TYPES[i])
+    return resistance
+
+def simplePokemonNeutrality(pokemon, typechart):
+    type = pokemon.type
+    neutrality = []
+    for i in range(18):
+        if typechart[i][donnees.POKEMON_TYPES_ID[type]] == 1:
+            neutrality.append(donnees.POKEMON_TYPES[i])
+    return neutrality
+
 def selectAttack(pokemon, opponent):
     # Choisir une attaque en fonction de la faiblesse du pokémon adverse
     weaknesses = simplePokemonWeakness(opponent, pokemon.type_chart)
+    neutrality = simplePokemonNeutrality(opponent, pokemon.type_chart)
+    resistance = simplePokemonResistance(opponent, pokemon.type_chart)
     for attack in pokemon.attacks:
         if attack[1] in weaknesses:
+            return attack
+        elif attack[1] in neutrality:
             return attack
     # Si aucune attaque ne correspond à la faiblesse, choisir une attaque aléatoire
     return pokemon.attacks[random.randint(0, NUMBER_OF_ATTACKS-1)]
