@@ -1,6 +1,8 @@
+
 import IATableDesTypes as IA
 import donnees
 import numpy as np
+
 
 matrix = IA.Dracaufeu.type_chart
 
@@ -34,5 +36,9 @@ with open('stock.txt', 'r') as fichier:
     matrix_from_file = [list(map(float, line.split())) for _, line in zip(range(18), fichier)]
 
 #print(np.array(matrix_from_file))
+
+
+
+
 
 
