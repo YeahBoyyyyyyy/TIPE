@@ -1,7 +1,12 @@
+import sys
+import os
+sys.path.append("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
 import IATableDesTypes as IA
 import donnees
 import numpy as np
-import stockage
+import save
+
+os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus")
 
 def import_type_chart(fichier):
     matrix_from_file = []
@@ -17,12 +22,15 @@ def import_pokemon_description(fichier):
             if line.startswith("Nom:"):
                 name = line.split(":")[1].strip()
                 pokemon.name = name
+            
             elif line.startswith("Type:"):
                 type = line.split(":")[1].strip()
                 pokemon.type = type
+            
             elif line.startswith("HP:"):
                 hp = int(line.split(":")[1].strip())
                 pokemon.hp = hp
+            
             elif line.startswith("Attaques:"):
                 raw_attacks = line.split(":")[1].strip()
                 attack_list = raw_attacks.split(',')
@@ -34,14 +42,16 @@ def import_pokemon_description(fichier):
                     cleaned_attacks.append(cleaned)
 
                 attacks = [(int(cleaned_attacks[2*i]), cleaned_attacks[2*i+1]) for i in range(len(cleaned_attacks)//2)]       
-
                 pokemon.attacks = attacks
+            
             elif line.startswith("Fitness:"):
                 fitness = float(line.split(":")[1].strip())
                 pokemon.fitness = fitness
+                
     return pokemon
 
 stock = open('stock.txt', 'r')
 
 pokemon = import_pokemon_description(stock)
-print(pokemon.attacks[1])
+
+stock.close()

@@ -184,7 +184,9 @@ def fight(pokemon1, pokemon2):
 
     # Générer une liste de 20 pokémons différents
 
-for i in range(50):
+Generation = [simplepokemon() for i in range(20)]
+
+for i in range(100):
     fight(Dracaufeu, simplepokemon())
     
 print(Dracaufeu())
