@@ -8,15 +8,18 @@ import save
 
 os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus")
 
-def import_type_chart(fichier):
-    matrix_from_file = []
-    with open('stock.txt', 'r') as fichier:
+def import_type_chart_1(name):
+    with open(name, 'r') as fichier:
         matrix_from_file = [list(map(float, line.split())) for _,line in zip(range(18),fichier)]
     return matrix_from_file
 
-def import_pokemon_description(fichier):
+def import_type_chart_2(fichier):
+    matrix_from_file = [list(map(float, line.split())) for _,line in zip(range(18),fichier)]
+    return matrix_from_file
+
+def import_pokemon_description(name):
     pokemon = IA.simplepokemon()
-    with open('stock.txt', 'r') as fichier:
+    with open(name, 'r') as fichier:
         lines = fichier.readlines()
         for line in lines:
             if line.startswith("Nom:"):
@@ -50,8 +53,6 @@ def import_pokemon_description(fichier):
                 
     return pokemon
 
-stock = open('stock.txt', 'r')
+eval_gen = [IA.type_chart_evaluation(import_pokemon_description("stock" + str(i+1) + ".txt")) for i in range(20)]
 
-pokemon = import_pokemon_description(stock)
-
-stock.close()
+print(eval_gen)

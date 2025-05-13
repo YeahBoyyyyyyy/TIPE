@@ -75,15 +75,12 @@ def generateTypeChart():
     
     return matrix
 
-Dracaufeu = simplepokemon("Dracaufeu",200, "Fire", [(50, "Ground"), (50, "Ice"), simpleAttack(), simpleAttack()])
-
 # les inputs seraient : 
 # - les types du pokémon en face 
 # - Les attaques du pokémon joué : type et puissance
 # - Pas encore le type du pokémon joué (on ne considère pas le STAB encore)
 
 #Pour l'IA sur la table des types, il faudrait générer une génération de pokémon (avec une capacité ?),
-
 
 ## Foncion pour faire combattre un pokémon contre un autre pokémon
 
@@ -144,7 +141,7 @@ def fitnessGain(pokemon, attack_used, opponent):
         pokemon.fitness += 5
 
 def fight(pokemon1, pokemon2):
-    print(pokemon2())
+    # print(pokemon2())
 
     while pokemon1.hp > 0 and pokemon2.hp > 0:
 
@@ -156,11 +153,11 @@ def fight(pokemon1, pokemon2):
         ######## Gain de fitness 
         fitnessGain(pokemon1, attack_used, pokemon2)
         
-        # Print the description of the attack used with colored pokemon names to the text
-        print(f"{bcolors.OKBLUE}{pokemon1.name}{bcolors.ENDC} used {attack_used[1]} attack on {bcolors.OKGREEN}{pokemon2.name}." + bcolors.ENDC)
+        # ------------- Print the description of the attack used with colored pokemon names to the text ------------- #
+        # print(f"{bcolors.OKBLUE}{pokemon1.name}{bcolors.ENDC} used {attack_used[1]} attack on {bcolors.OKGREEN}{pokemon2.name}." + bcolors.ENDC)
 
         if pokemon2.hp <= 0:
-            print(f"{bcolors.OKBLACK}{pokemon2.name} fainted!" + bcolors.ENDC)
+            # print(f"{bcolors.OKBLACK}{pokemon2.name} fainted!" + bcolors.ENDC)
             pokemon1.fitness += 20  # Gain fitness for knocking out the opponent
             break
 
@@ -170,11 +167,11 @@ def fight(pokemon1, pokemon2):
         attack_used = pokemon2.attacks[random.randint(0, NUMBER_OF_ATTACKS-1)]
         damageSingleType(attack_used, pokemon1)
         
-        # Print the description of the attack used with colors to the text
-        print(f"{bcolors.OKGREEN}{pokemon2.name}{bcolors.ENDC} used {attack_used[1]} attack on {bcolors.OKBLUE}{pokemon1.name}." + bcolors.ENDC)
+        # ------------- Print the description of the attack used with colors to the text ------------- #
+        # print(f"{bcolors.OKGREEN}{pokemon2.name}{bcolors.ENDC} used {attack_used[1]} attack on {bcolors.OKBLUE}{pokemon1.name}." + bcolors.ENDC)
 
         if pokemon1.hp <= 0:
-            print(f"{bcolors.OKGREEN}{pokemon1.name} fainted!" + bcolors.ENDC)
+            # print(f"{bcolors.OKGREEN}{pokemon1.name} fainted!" + bcolors.ENDC)
             pokemon1.fitness -= 50  # Loss of fitness for being knocked out
             break
     
@@ -184,12 +181,26 @@ def fight(pokemon1, pokemon2):
 
     # Générer une liste de 20 pokémons différents
 
-Generation = [simplepokemon() for i in range(20)]
+def type_chart_evaluation(pokemon):
+    IA_type_chart = pokemon.type_chart
+    evaluation = 0
+    for i in range(18):
+        for j in range(18):
+            if IA_type_chart[i][j] == donnees.type_chart[i][j]:
+                evaluation += 1
+    return evaluation
 
-for i in range(100):
-    fight(Dracaufeu, simplepokemon())
+
+
+Generation = [simplepokemon(name= "Individu : "+str(i+1)) for i in range(20)]
+
+for i in range(20):
+    for j in range(100):
+        fight(Generation[i], simplepokemon())
     
-print(Dracaufeu())
+
+
+
 
 
 
