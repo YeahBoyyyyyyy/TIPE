@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from enum import IntEnum
 import random
 import donnees
@@ -27,7 +26,7 @@ NUMBER_OF_ATTACKS = 4
 ZERO = 0
 HALF = 1/2
 DOUBLE = 2
-MUTATION_CHANCE = 0.00005
+MUTATION_CHANCE = 0.0001
 
 # Choisi un type au hasard parmis les 18 types du jeu
 def randomType():
@@ -220,15 +219,20 @@ test1 = simplepokemon()
 test1.type_chart = [[2 for i in range(18)] for i in range(18)]
 test2 = simplepokemon()
 test2.type_chart = [[0.5 for i in range(18)] for i in range(18)]
+test3 = simplepokemon()
+test3.type_chart = [[1 for i in range(18)] for i in range(18)]
+test4 = simplepokemon()
+test4.type_chart = [[0 for i in range(18)] for i in range(18)]
 
 
-#Generation = [simplepokemon(name= "Individu : "+str(i+1)) for i in range(20)]
+Generation = [simplepokemon(name= "Individu : "+str(i+1)) for i in range(20)]
 
-#for i in range(20):
-#    print(Generation[i])
-#    for j in range(100): 
-#        fight(Generation[i], simplepokemon())
-
+'''
+for i in range(20):
+    print(Generation[i])
+    for j in range(100): 
+        fight(Generation[i], simplepokemon())
+'''
 
 
 

@@ -55,6 +55,8 @@ def save_ind(individu, name = "stock.txt"):
 
 save_ind(IA.test1, "test1.txt")
 save_ind(IA.test2, "test2.txt")
+save_ind(IA.test3, "test3.txt")
+save_ind(IA.test4, "test4.txt")
 
 
 

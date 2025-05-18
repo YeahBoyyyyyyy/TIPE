@@ -108,12 +108,6 @@ os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus")
 # enregistrer dans une liste touts les fichiers .txt
 fichiers = [f for f in os.listdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus") if f.endswith('.txt')]
 
-
-# Chargement des pokémons
-pokemon1 = load.import_pokemon("test1.txt")
-pokemon2 = load.import_pokemon("test2.txt")
-child = IA.crossover(pokemon1, pokemon2)
-
 # Paramètres d'affichage
 l, h = 43, 19
 rect_x, rect_y = 8 + l, 5 + h
@@ -170,9 +164,64 @@ def type_chart(chart,canvas):
             canvas.create_rectangle(col, row, col + rect_pattern_width, row + rect_pattern_height, fill=rect_colors[idx], outline="#222")
             canvas.create_text(col + 21, row + 14, text=multiplier_text[idx], fill=multiplier_colors[idx], font=("Arial", 10, "bold"))
 
-def mutation(pokemon):
-    for i in range(10):
-        IA.mutation_type_chart(pokemon)
+def manual_mutation():
+    # Fenêtre pour demander l'indice du pokémon à muter
+    popup = tk.Toplevel(window)
+    popup.title("Choisir le pokémon à muter")
+    popup.geometry("300x100")
+
+    tk.Label(popup, text="Indice Pokémon à muter:").pack(pady=5)
+    entry = tk.Entry(popup)
+    entry.pack(pady=5)
+
+    def do_mutation():
+        try:
+            idx = int(entry.get())
+            if idx < 0 or idx >= len(fichiers):
+                raise ValueError
+            poke = load.import_pokemon(fichiers[idx])
+            for _ in range(100):
+                IA.mutation_type_chart(poke)
+            btn = tk.Button(window, text=f"Muté {idx}", command=lambda: create_table_type_window_from_pokemon(poke))
+            btn.grid(row=len(buttons)+3, column=6, padx=10, pady=5)
+        except Exception:
+            tk.Label(popup, text="Indice invalide", fg="red").pack()
+        else:
+            popup.destroy()
+
+    tk.Button(popup, text="Muter", command=do_mutation).pack(pady=10)
+
+def manual_crossover():
+    # Fenêtre pour demander les indices des pokémons à croiser
+    popup = tk.Toplevel(window)
+    popup.title("Choisir les pokémons à croiser")
+    popup.geometry("300x150")
+
+    tk.Label(popup, text="Indice Pokémon 1:").pack(pady=5)
+    entry1 = tk.Entry(popup)
+    entry1.pack(pady=5)
+
+    tk.Label(popup, text="Indice Pokémon 2:").pack(pady=5)
+    entry2 = tk.Entry(popup)
+    entry2.pack(pady=5)
+
+    def do_crossover():
+        try:
+            idx1 = int(entry1.get())
+            idx2 = int(entry2.get())
+            if idx1 < 0 or idx1 >= len(fichiers) or idx2 < 0 or idx2 >= len(fichiers):
+                raise ValueError
+            poke1 = load.import_pokemon(fichiers[idx1])
+            poke2 = load.import_pokemon(fichiers[idx2])
+            baby = IA.crossover(poke1, poke2)
+            btn = tk.Button(window, text=f"Enfant {idx1}-{idx2}", command=lambda: create_table_type_window_from_pokemon(baby))
+            btn.grid(row=len(buttons)+2, column=6, padx=10, pady=5)
+        except Exception:
+            tk.Label(popup, text="Indices invalides", fg="red").pack()
+        else:
+            popup.destroy()
+
+    tk.Button(popup, text="Croiser", command=do_crossover).pack(pady=10)
 
 pokemon_basic_type_chart = IA.simplepokemon()
 pokemon_basic_type_chart.type_chart = donnees.type_chart
@@ -180,13 +229,14 @@ pokemon_basic_type_chart.type_chart = donnees.type_chart
 #### -------------------------------Fenêtre Tkinter------------------------------- ####
 
 def create_table_type_window_from_file(name):
+    pokemon = load.import_pokemon(name)
     extra_window = tk.Toplevel()
     extra_window.title(name)
     extra_window.geometry("900x500")
     canvas = Canvas(extra_window, width=900, height=600, bg="#9F9E9E")
     canvas.pack()
     type_table_window(canvas)
-    type_chart(donnees.type_chart, canvas)
+    type_chart(pokemon.type_chart, canvas)
 
 def create_table_type_window_from_pokemon(pokemon):
     extra_window = tk.Toplevel()
@@ -197,6 +247,9 @@ def create_table_type_window_from_pokemon(pokemon):
     type_table_window(canvas)
     type_chart(pokemon.type_chart, canvas)
 
+def remove_button(button):
+    button.grid_forget()
+    
 
 window = tk.Tk()
 window.title("Affichage Table des Types")
@@ -208,22 +261,18 @@ for i, fichier in enumerate(fichiers):
     button.grid(row=i, column=0, padx=10, pady=10)
     buttons.append(button)
 
-mutate_button = tk.Button(window, text="Muter", command=lambda: mutation(pokemon_basic_type_chart))
-mutate_button.grid(row=0, column=1, padx=20, pady=10, sticky="ne")
+mutate_button = tk.Button(window, text="Muter", command=lambda: manual_mutation())
+mutate_button.grid(row=0, column=5, padx=20, pady=10, sticky="ne")
 
-pokemonx2 = IA.test1
-pokemonx05 = IA.test2
+crossover_button = tk.Button(window, text="Croiser", command=lambda: manual_crossover())
+crossover_button.grid(row=2, column=5, padx=20, pady=10, sticky="ne")
 
-pokemonx2_button = tk.Button(window, text="Pokémon 1", command=lambda: create_table_type_window_from_pokemon(pokemonx2))
-pokemonx2_button.grid(row=2, column=2, padx=20, pady=10, sticky="ne")
 
-pokemonx05_button = tk.Button(window, text="Pokémon 2", command=lambda: create_table_type_window_from_pokemon(pokemonx05))
-pokemonx05_button.grid(row=3, column=2, padx=20, pady=10, sticky="ne")
 
-child1 = IA.crossover(pokemonx2, pokemonx05)
+test = tk.Button(window, text="Test", command = lambda: remove_button(crossover_button))
+test.grid(row=1, column=5, padx=20, pady=10, sticky="ne")
+# Comment enlever un bouton de l'affichage ?
 
-crossover_button = tk.Button(window, text="Croiser", command=lambda: create_table_type_window_from_pokemon(child1))
-crossover_button.grid(row=4, column=2, padx=20, pady=10, sticky="ne")
 
 window.mainloop()
 

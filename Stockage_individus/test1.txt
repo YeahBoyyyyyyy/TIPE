@@ -17,7 +17,7 @@
 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
 Nom: Null
-Type: Psychic
+Type: Fairy
 HP: 200
-Attaques: [(50, 'Fighting'), (50, 'Dark'), (50, 'Dark'), (50, 'Dragon')]
+Attaques: [(50, 'Poison'), (50, 'Fairy'), (50, 'Flying'), (50, 'Electric')]
 Fitness: 0
