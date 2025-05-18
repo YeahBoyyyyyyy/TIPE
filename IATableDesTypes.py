@@ -27,6 +27,7 @@ NUMBER_OF_ATTACKS = 4
 ZERO = 0
 HALF = 1/2
 DOUBLE = 2
+MUTATION_CHANCE = 0.00005
 
 # Choisi un type au hasard parmis les 18 types du jeu
 def randomType():
@@ -140,6 +141,15 @@ def fitnessGain(pokemon, attack_used, opponent):
     elif effectivness == 1:
         pokemon.fitness += 5
 
+def type_chart_evaluation(pokemon):
+    IA_type_chart = pokemon.type_chart
+    evaluation = 0
+    for i in range(18):
+        for j in range(18):
+            if IA_type_chart[i][j] == donnees.type_chart[i][j]:
+                evaluation += 1
+    return (evaluation/324)
+
 def fight(pokemon1, pokemon2):
     # print(pokemon2())
 
@@ -181,22 +191,47 @@ def fight(pokemon1, pokemon2):
 
     # Générer une liste de 20 pokémons différents
 
-def type_chart_evaluation(pokemon):
-    IA_type_chart = pokemon.type_chart
-    evaluation = 0
+# Parcours la table des types du pokemon et génère des mutations
+def mutation_type_chart(pokemon):
+    chart = pokemon.type_chart
+    L = [0, 0.5, 1, 2]
     for i in range(18):
         for j in range(18):
-            if IA_type_chart[i][j] == donnees.type_chart[i][j]:
-                evaluation += 1
-    return evaluation
+            if random.random() <= MUTATION_CHANCE:
+                r = random.randint(1,4)
+                chart[i][j] = L[r-1]
+    pokemon.type_chart = chart
+    return pokemon
+
+def crossover(pokemon1, pokemon2):
+    child = simplepokemon()
+    chart1 = pokemon1.type_chart
+    chart2 = pokemon2.type_chart
+    for i in range(18):
+        for j in range(18):
+            r = random.random()
+            if r < 0.5:
+                child.type_chart[i][j] = chart1[i][j]
+            else:
+                child.type_chart[i][j] = chart2[i][j]
+    return child
+                   
+test1 = simplepokemon()
+test1.type_chart = [[2 for i in range(18)] for i in range(18)]
+test2 = simplepokemon()
+test2.type_chart = [[0.5 for i in range(18)] for i in range(18)]
+
+
+#Generation = [simplepokemon(name= "Individu : "+str(i+1)) for i in range(20)]
+
+#for i in range(20):
+#    print(Generation[i])
+#    for j in range(100): 
+#        fight(Generation[i], simplepokemon())
 
 
 
-Generation = [simplepokemon(name= "Individu : "+str(i+1)) for i in range(20)]
 
-for i in range(20):
-    for j in range(100):
-        fight(Generation[i], simplepokemon())
     
 
 

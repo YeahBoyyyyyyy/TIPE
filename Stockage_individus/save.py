@@ -7,7 +7,6 @@ import numpy as np
 
 os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus")
 
-generation = IA.Generation
 
 def write_pokemon_description(file, pokemon):
     type = pokemon.type
@@ -37,9 +36,9 @@ def save_gen(generation):
 
         fichier.close()
 
-def save_ind(individu):
+def save_ind(individu, name = "stock.txt"):
 
-    fichier = open("stock.txt", "w")
+    fichier = open(name, "w")
 
     matrix = individu.type_chart
 
@@ -50,7 +49,12 @@ def save_ind(individu):
 
     fichier.close()
 
-save_gen(generation)
+
+#generation = IA.Generation
+#save_gen(generation)
+
+save_ind(IA.test1, "test1.txt")
+save_ind(IA.test2, "test2.txt")
 
 
 
