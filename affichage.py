@@ -170,10 +170,16 @@ def type_chart(chart,canvas):
             canvas.create_rectangle(col, row, col + rect_pattern_width, row + rect_pattern_height, fill=rect_colors[idx], outline="#222")
             canvas.create_text(col + 21, row + 14, text=multiplier_text[idx], fill=multiplier_colors[idx], font=("Arial", 10, "bold"))
 
+def mutation(pokemon):
+    for i in range(10):
+        IA.mutation_type_chart(pokemon)
 
-#### -------------------------------Fenêtre Tkinter 1er pokemon------------------------------- ####
+pokemon_basic_type_chart = IA.simplepokemon()
+pokemon_basic_type_chart.type_chart = donnees.type_chart
 
-def create_table_type_window(name):
+#### -------------------------------Fenêtre Tkinter------------------------------- ####
+
+def create_table_type_window_from_file(name):
     extra_window = tk.Toplevel()
     extra_window.title(name)
     extra_window.geometry("900x500")
@@ -182,6 +188,15 @@ def create_table_type_window(name):
     type_table_window(canvas)
     type_chart(donnees.type_chart, canvas)
 
+def create_table_type_window_from_pokemon(pokemon):
+    extra_window = tk.Toplevel()
+    extra_window.title(pokemon.name)
+    extra_window.geometry("900x500")
+    canvas = Canvas(extra_window, width=900, height=600, bg="#9F9E9E")
+    canvas.pack()
+    type_table_window(canvas)
+    type_chart(pokemon.type_chart, canvas)
+
 
 window = tk.Tk()
 window.title("Affichage Table des Types")
@@ -189,45 +204,28 @@ window.geometry("600x400")
 
 buttons = []
 for i, fichier in enumerate(fichiers):
-    button = tk.Button(window, text="fenêtre" + str(i), command=lambda name=fichier: create_table_type_window(name))
+    button = tk.Button(window, text="pokémon n° " + str(i), command=lambda name=fichier: create_table_type_window_from_file(name))
     button.grid(row=i, column=0, padx=10, pady=10)
     buttons.append(button)
+
+mutate_button = tk.Button(window, text="Muter", command=lambda: mutation(pokemon_basic_type_chart))
+mutate_button.grid(row=0, column=1, padx=20, pady=10, sticky="ne")
+
+pokemonx2 = IA.test1
+pokemonx05 = IA.test2
+
+pokemonx2_button = tk.Button(window, text="Pokémon 1", command=lambda: create_table_type_window_from_pokemon(pokemonx2))
+pokemonx2_button.grid(row=2, column=2, padx=20, pady=10, sticky="ne")
+
+pokemonx05_button = tk.Button(window, text="Pokémon 2", command=lambda: create_table_type_window_from_pokemon(pokemonx05))
+pokemonx05_button.grid(row=3, column=2, padx=20, pady=10, sticky="ne")
+
+child1 = IA.crossover(pokemonx2, pokemonx05)
+
+crossover_button = tk.Button(window, text="Croiser", command=lambda: create_table_type_window_from_pokemon(child1))
+crossover_button.grid(row=4, column=2, padx=20, pady=10, sticky="ne")
 
 window.mainloop()
 
 
-'''
-# Fenêtre principale
-root1 = tk.Tk()
-root1.title("Affichage Table des Types")
-canva = Canvas(root1, width=900, height=600, bg="#808080")
-canva.pack()
-
-# Affichage des icônes de types
-
-            
-
-
-# Fonction d'affichage de la table des types
-def type_chart(chart,canvas):
-    for i, row in zip(range(18), range(rect_y, rect_y + rect_height, rect_pattern_height)):
-        for j, col in zip(range(18), range(rect_x, rect_x + rect_width, rect_pattern_width)):
-            val = chart[i][j]
-            idx = get_multiplier_index(val)
-            canvas.create_rectangle(col, row, col + rect_pattern_width, row + rect_pattern_height, fill=rect_colors[idx], outline="#222")
-            canvas.create_text(col + 21, row + 14, text=multiplier_text[idx], fill=multiplier_colors[idx], font=("Arial", 10, "bold"))
-
-
-# Fonction de mutation et affichage
-def mutation(pokemon):
-    IA.mutation_type_chart(pokemon)
-    canvas.delete("multiplier")
-    type_chart(child.type_chart)
-
-# Affichage initial
-canva.create_rectangle(0, 0, 850, 560, fill="#C8C8C8", outline="")
-type_chart(child.type_chart, canva)
-
-root1.mainloop()
-'''
 
