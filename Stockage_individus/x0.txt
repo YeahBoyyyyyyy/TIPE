@@ -17,7 +17,7 @@
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 Nom: Null
-Type: Rock
+Type: Bug
 HP: 200
-Attaques: [(50, 'Ground'), (50, 'Fairy'), (50, 'Water'), (50, 'Water')]
+Attaques: [(50, 'Ice'), (50, 'Grass'), (50, 'Flying'), (50, 'Ghost')]
 Fitness: 0

@@ -17,7 +17,7 @@
 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
 Nom: Null
-Type: Flying
+Type: Normal
 HP: 200
-Attaques: [(50, 'Rock'), (50, 'Normal'), (50, 'Psychic'), (50, 'Electric')]
+Attaques: [(50, 'Poison'), (50, 'Rock'), (50, 'Normal'), (50, 'Normal')]
 Fitness: 0

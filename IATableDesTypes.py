@@ -2,6 +2,8 @@ import numpy as np
 from enum import IntEnum
 import random
 import donnees
+import os
+from Stockage_individus import load
 
 class bcolors:
     OKWHITE = '\033[97m'
@@ -214,7 +216,22 @@ def crossover(pokemon1, pokemon2):
             else:
                 child.type_chart[i][j] = chart2[i][j]
     return child
-                   
+
+def tri_individus(generation):
+    """
+    Tri la génération d'individus en fonction de leur fitness.
+    :param generation: Liste d'individus à trier.
+    :return: Liste triée d'individus.
+    """
+    return sorted(generation, key=lambda x: x.fitness, reverse=True)
+
+def get_generation_from_files():
+    """
+    Récupère la génération d'individus à partir de fichiers.
+    :return: Liste d'individus.
+    """
+    return (load.import_pokemon(f) for f in os.listdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus") if f.endswith('.txt'))
+
 test1 = simplepokemon()
 test1.type_chart = [[2 for i in range(18)] for i in range(18)]
 test2 = simplepokemon()

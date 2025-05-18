@@ -105,7 +105,7 @@ pygame.quit()
 
 os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus")
 
-# enregistrer dans une liste touts les fichiers .txt
+# enregistrer dans une liste tous les fichiers .txt
 fichiers = [f for f in os.listdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus") if f.endswith('.txt')]
 
 # Paramètres d'affichage
@@ -215,7 +215,7 @@ def manual_crossover():
             poke2 = load.import_pokemon(fichiers[idx2])
             baby = IA.crossover(poke1, poke2)
             btn = tk.Button(window, text=f"Enfant {idx1}-{idx2}", command=lambda: create_table_type_window_from_pokemon(baby))
-            btn.grid(row=len(buttons)+2, column=6, padx=10, pady=5)
+            btn.grid(row=4, column=4, padx=10, pady=5)
         except Exception:
             tk.Label(popup, text="Indices invalides", fg="red").pack()
         else:
@@ -250,15 +250,17 @@ def create_table_type_window_from_pokemon(pokemon):
 def remove_button(button):
     button.grid_forget()
     
-
 window = tk.Tk()
 window.title("Affichage Table des Types")
-window.geometry("600x400")
+window.geometry("700x700")
 
 buttons = []
 for i, fichier in enumerate(fichiers):
-    button = tk.Button(window, text="pokémon n° " + str(i), command=lambda name=fichier: create_table_type_window_from_file(name))
-    button.grid(row=i, column=0, padx=10, pady=10)
+    button = tk.Button(window, text="pokémon n° " + str(i+1), command=lambda name=fichier: create_table_type_window_from_file(name))
+    if i >= 10:
+        button.grid(row=i-10, column=1, padx=10, pady=10)
+    else:
+        button.grid(row=i, column=0, padx=10, pady=10)
     buttons.append(button)
 
 mutate_button = tk.Button(window, text="Muter", command=lambda: manual_mutation())

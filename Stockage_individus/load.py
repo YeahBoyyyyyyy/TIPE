@@ -2,7 +2,6 @@ import sys
 import os
 sys.path.append("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
 import IATableDesTypes as IA
-import donnees
 import numpy as np
 
 def import_type_chart_1(name):
@@ -68,6 +67,4 @@ def import_pokemon(name_file):
     return pokemon
 
 #eval_gen = [IA.type_chart_evaluation(import_pokemon_description("stock" + str(i+1) + ".txt")) for i in range(20)]
-pok = import_pokemon("test1.txt")
-print(pok.type_chart)
 #print(eval_gen)
