@@ -218,20 +218,22 @@ def crossover(pokemon1, pokemon2):
     return child
 
 def tri_individus(generation):
-    """
-    Tri la génération d'individus en fonction de leur fitness.
-    :param generation: Liste d'individus à trier.
-    :return: Liste triée d'individus.
-    """
-    return sorted(generation, key=lambda x: x.fitness, reverse=True)
+    # Trie la génération d'individus par fitness
+    n = len(generation)
+    for i in range(n):
+        for j in range(n-i-1):
+            if generation[j].fitness < generation[j+1].fitness:
+                generation[j], generation[j+1] = generation[j+1], generation[j]
 
 def get_generation_from_files():
-    """
-    Récupère la génération d'individus à partir de fichiers.
-    :return: Liste d'individus.
-    """
-    return (load.import_pokemon(f) for f in os.listdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus") if f.endswith('.txt'))
+    # Recupere la liste les individus à partir des fichiers texte
+    liste = []
+    for f in os.listdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus"):
+        if f.endswith('.txt'):
+            liste.append(load.import_pokemon(f))
+    return liste
 
+"""
 test1 = simplepokemon()
 test1.type_chart = [[2 for i in range(18)] for i in range(18)]
 test2 = simplepokemon()
@@ -240,20 +242,18 @@ test3 = simplepokemon()
 test3.type_chart = [[1 for i in range(18)] for i in range(18)]
 test4 = simplepokemon()
 test4.type_chart = [[0 for i in range(18)] for i in range(18)]
+"""
 
+# Generation = [simplepokemon(name= "Individu : "+str(i+1)) for i in range(20)]
 
-Generation = [simplepokemon(name= "Individu : "+str(i+1)) for i in range(20)]
-
-'''
+"""
 for i in range(20):
     print(Generation[i])
     for j in range(100): 
         fight(Generation[i], simplepokemon())
-'''
+"""
 
-
-
-    
+ 
 
 
 

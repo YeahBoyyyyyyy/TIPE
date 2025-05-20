@@ -119,7 +119,7 @@ default_gap = 4
 # Préparation des textes multiplicateurs
 multiplier_text = ["x1", "x0", "x0.5", "x2"]
 multiplier_colors = ["#000000", "#FFFFFF", "#000000", "#000000"]
-rect_colors = ["#8C8C8C", "#000000", "#D32D2D", "#0ED145"]
+rect_colors = ["#8C8C8C", "#000000", "#D32D2D", "#0FD647"]
 
 # Chargement de l'image des types
 
@@ -249,7 +249,8 @@ def create_table_type_window_from_pokemon(pokemon):
 
 def remove_button(button):
     button.grid_forget()
-    
+
+
 window = tk.Tk()
 window.title("Affichage Table des Types")
 window.geometry("700x700")
@@ -268,8 +269,6 @@ mutate_button.grid(row=0, column=5, padx=20, pady=10, sticky="ne")
 
 crossover_button = tk.Button(window, text="Croiser", command=lambda: manual_crossover())
 crossover_button.grid(row=2, column=5, padx=20, pady=10, sticky="ne")
-
-
 
 test = tk.Button(window, text="Test", command = lambda: remove_button(crossover_button))
 test.grid(row=1, column=5, padx=20, pady=10, sticky="ne")

@@ -50,15 +50,13 @@ def save_ind(individu, name = "stock.txt"):
     fichier.close()
 
 
-#generation = IA.Generation
-#save_gen(generation)
-save_gen(IA.Generation)
 
+"""
 save_ind(IA.test1, "x2.txt")
 save_ind(IA.test2, "x0,5.txt")
 save_ind(IA.test3, "x1.txt")
 save_ind(IA.test4, "x0.txt")
-
+"""
 
 
 
