@@ -5,9 +5,6 @@ import IATableDesTypes as IA
 import donnees
 import numpy as np
 
-os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus")
-
-
 def write_pokemon_description(file, pokemon):
     type = pokemon.type
     name = pokemon.name
@@ -20,8 +17,10 @@ def write_pokemon_description(file, pokemon):
     file.write(f"Attaques: {attacks}\n")
     file.write(f"Fitness: {fitness}\n")
 
+
 ## Sauvegarde de l'individu dans un fichier texte
 def save_gen(generation):
+    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Cloud")
     n = len(generation)
 
     for i in range(n):
@@ -35,8 +34,10 @@ def save_gen(generation):
         write_pokemon_description(fichier, generation[i])
 
         fichier.close()
+    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
 
 def save_ind(individu, name = "stock.txt"):
+    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus")
 
     fichier = open(name, "w")
 
@@ -48,7 +49,27 @@ def save_ind(individu, name = "stock.txt"):
     write_pokemon_description(fichier, individu)
 
     fichier.close()
+    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
 
+## Sauvegarde de la génération après évolution et selection. Ils sont donc supposé être "parfait" et "optimaux"
+def final_save_gen(gen):
+    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Final_Gen")
+    
+    n = len(gen)
+
+    for i in range(n):
+        fichier = open("stock" + str(i+1) + ".txt", "w")
+
+        matrix = gen[i].type_chart
+
+        for row in matrix:
+            fichier.write(' '.join([str(a) for a in row]) + '\n')
+
+        write_pokemon_description(fichier, gen[i])
+
+        fichier.close()
+
+    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
 
 
 """

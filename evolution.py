@@ -5,23 +5,56 @@ import donnees
 from Stockage_individus import load
 from Stockage_individus import save
 
-Generation = IA.get_generation_from_files()
+Generation = load.get_generation_from_files()
+
+def selection(gen):
+    # Tri des individus par fitness
+    IA.tri_individus(gen)
+
+    # Croisement et mutation pour créer une nouvelle génération
+    new_generation = IA.new_generation(gen)
+
+    return new_generation
+
+def evolution(gen, int):
+
+    population = gen
+
+    for i in range(int):
+        print("--------------------------GENERATION " + str(i) + "--------------------------")
+        IA.fight_generation(population)
+        population = selection(population)
+        
+    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Final_Gen")
+    save.final_save_gen(population)
+    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
+
+evolution(Generation, 50)
+"""
+for j in range(2):
+    #for i in range(20):
+     #   print(Generation[i]())
+
+    IA.tri_individus(Generation)
+
+    print(f"-------------------------------TRI GENERATION {j}-------------------------------")
+    #for i in range(20):
+     #   print(Generation[i]())
+
+    Generation = IA.new_generation(Generation)
+
+    print(f"-------------------------------NOUVELLE GENERATION {j}-------------------------------")
+
+    for i in range(len(Generation)):
+        print(Generation[i]())
+    print("Nombre d'individus à sauvegarder :", len(Generation))
+
+os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Final_Gen")
+   
+save.final_save_gen(Generation)
 
 
-for i in range(20):
-    print(Generation[i]())
-
-IA.tri_individus(Generation)
-
-print("-------------------------------TRI-------------------------------")
-for i in range(20):
-    print(Generation[i]())
 
 
 
-
-
-
-
-
-
+"""

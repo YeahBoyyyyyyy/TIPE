@@ -217,21 +217,35 @@ def crossover(pokemon1, pokemon2):
                 child.type_chart[i][j] = chart2[i][j]
     return child
 
-def tri_individus(generation):
+# Fait combattre une chaque individus d'une génération contre 100 pokémons simples 
+def fight_generation(gen):
+    for i in range(20):
+        for _ in range(500): 
+            fight(gen[i], simplepokemon())
+
+
+def tri_individus(gen):
     # Trie la génération d'individus par fitness
-    n = len(generation)
+    n = len(gen)
     for i in range(n):
         for j in range(n-i-1):
-            if generation[j].fitness < generation[j+1].fitness:
-                generation[j], generation[j+1] = generation[j+1], generation[j]
+            if gen[j].fitness < gen[j+1].fitness:
+                gen[j], gen[j+1] = gen[j+1], gen[j]
 
-def get_generation_from_files():
-    # Recupere la liste les individus à partir des fichiers texte
-    liste = []
-    for f in os.listdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus"):
-        if f.endswith('.txt'):
-            liste.append(load.import_pokemon(f))
-    return liste
+def new_generation(gen):
+    # Crée une nouvelle génération à partir de la génération actuelle
+    new_gen = []
+    gen[0].fitness = 0
+    new_gen.append(gen[0])
+    gen.pop(0)
+    for i in range(len(gen)):
+        parent1 = gen[0]
+        parent2 = gen[i]
+        child = crossover(parent1, parent2)
+        child = mutation_type_chart(child)
+        child.name = "Individu"
+        new_gen.append(child)
+    return new_gen
 
 """
 test1 = simplepokemon()
@@ -246,12 +260,7 @@ test4.type_chart = [[0 for i in range(18)] for i in range(18)]
 
 # Generation = [simplepokemon(name= "Individu : "+str(i+1)) for i in range(20)]
 
-"""
-for i in range(20):
-    print(Generation[i])
-    for j in range(100): 
-        fight(Generation[i], simplepokemon())
-"""
+
 
  
 

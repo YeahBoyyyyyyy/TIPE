@@ -5,7 +5,7 @@ import IATableDesTypes as IA
 import numpy as np
 
 def import_type_chart_1(name):
-    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus")
+    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Cloud")
     with open(name, 'r') as fichier:
         matrix_from_file = [list(map(float, line.split())) for _,line in zip(range(18),fichier)]
     os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
@@ -16,7 +16,7 @@ def import_type_chart_2(fichier):
     return matrix_from_file
 
 def import_pokemon_description(name):
-    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus")
+    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Cloud")
     pokemon = IA.simplepokemon()
     with open(name, 'r') as fichier:
         lines = fichier.readlines()
@@ -53,7 +53,7 @@ def import_pokemon_description(name):
     return pokemon
 
 def import_pokemon(name_file):
-    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus")
+    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Cloud")
     pokemon = IA.simplepokemon()
     description = import_pokemon_description(name_file)
     chart = import_type_chart_1(name_file)
@@ -65,6 +65,15 @@ def import_pokemon(name_file):
     pokemon.fitness = description.fitness
     os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")    
     return pokemon
+
+def get_generation_from_files():
+    # Recupere la liste les individus à partir des fichiers texte
+    liste = []
+    for f in os.listdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Cloud"):
+        if f.endswith('.txt'):
+            liste.append(import_pokemon(f))
+    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
+    return liste
 
 #eval_gen = [IA.type_chart_evaluation(import_pokemon_description("stock" + str(i+1) + ".txt")) for i in range(20)]
 #print(eval_gen)
