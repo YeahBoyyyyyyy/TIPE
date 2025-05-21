@@ -29,9 +29,11 @@ def evolution(gen, int):
     save.final_save_gen(population)
     os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
 
-evolution(Generation, 50)
+#evolution(Generation, 500)
+
 """
 for j in range(2):
+    IA.fight_generation(Generation)
     #for i in range(20):
      #   print(Generation[i]())
 
@@ -49,12 +51,15 @@ for j in range(2):
         print(Generation[i]())
     print("Nombre d'individus à sauvegarder :", len(Generation))
 
-os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Final_Gen")
-   
-save.final_save_gen(Generation)
-
-
-
-
 
 """
+os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Final_Gen")
+gen = load.get_generation_from_files()
+
+for i in range(len(gen)):
+    print(gen[i].type)
+    print(gen[i].name)
+    print(IA.type_chart_evaluation(gen[i]))
+
+pok = IA.simplepokemon()
+print(IA.type_chart_evaluation(pok))

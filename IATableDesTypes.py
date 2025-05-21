@@ -28,7 +28,7 @@ NUMBER_OF_ATTACKS = 4
 ZERO = 0
 HALF = 1/2
 DOUBLE = 2
-MUTATION_CHANCE = 0.0001
+MUTATION_CHANCE = 0.00002
 
 # Choisi un type au hasard parmis les 18 types du jeu
 def randomType():
@@ -122,7 +122,6 @@ def selectAttack(pokemon, opponent):
     # Choisir une attaque en fonction de la faiblesse du pokémon adverse
     weaknesses = simplePokemonWeakness(opponent, pokemon.type_chart)
     neutrality = simplePokemonNeutrality(opponent, pokemon.type_chart)
-    resistance = simplePokemonResistance(opponent, pokemon.type_chart)
     for attack in pokemon.attacks:
         if attack[1] in weaknesses:
             return attack
@@ -131,7 +130,22 @@ def selectAttack(pokemon, opponent):
     # Si aucune attaque ne correspond à la faiblesse, choisir une attaque aléatoire
     return pokemon.attacks[random.randint(0, NUMBER_OF_ATTACKS-1)]
 
-def fitnessGain(pokemon, attack_used, opponent):
+def selectAttackDefense(pokemon, opponent):
+    # Choisir une attaque en fonction de la faiblesse du pokémon adverse
+    immunities = simplePokemonImmunities(opponent, opponent.type_chart)
+    resistance = simplePokemonResistance(opponent, opponent.type_chart)
+    for attack in pokemon.attacks:
+        if attack[1] in immunities:
+            return attack
+        elif attack[1] in resistance:
+            return attack
+    # Si aucune attaque ne correspond à la faiblesse, choisir une attaque aléatoire
+    return pokemon.attacks[random.randint(0, NUMBER_OF_ATTACKS-1)]
+
+#### ESSAYER DE LA FAIRE JOUER CONTRE ELLE MEME C'EST A DIRE UTILISER SA TABLE DES TYPES POUR SE COMBATTRE MAIS CETTE FOIS CI IL FAUT UTILISER
+#### LA CAPACITE LA MOINS EFFICACA. CELA PERMETTRA AUX x0.5 ET x0 DE LA TABLE DES TYPES D'INFLUER SUR LA FITNESS DE L'INDIVIDU
+
+def fitnessGainAttack(pokemon, attack_used, opponent):
     effectivness = mono_type_attack_effectiveness(attack_used[1], opponent.type)
     if effectivness == 2:
         pokemon.fitness += attack_used[0] * effectivness
@@ -139,8 +153,15 @@ def fitnessGain(pokemon, attack_used, opponent):
         pokemon.fitness -= 30
     elif effectivness == 0:
         pokemon.fitness -= 50
-    elif effectivness == 1:
-        pokemon.fitness += 5
+
+def fitnessGainDefense(pokemon, attack_used):
+    effectivness = mono_type_attack_effectiveness(attack_used[1], pokemon.type)
+    if effectivness == 2:
+        pokemon.fitness -= 50
+    elif effectivness == 0.5:
+        pokemon.fitness += 30
+    elif effectivness == 0:
+        pokemon.fitness += 50
 
 def type_chart_evaluation(pokemon):
     IA_type_chart = pokemon.type_chart
@@ -154,15 +175,17 @@ def type_chart_evaluation(pokemon):
 def fight(pokemon1, pokemon2):
     # print(pokemon2())
 
-    while pokemon1.hp > 0 and pokemon2.hp > 0:
+    compteur = 0
 
+    while pokemon1.hp > 0 and pokemon2.hp > 0:
+        
         # ---------------------- Tour du pokémon IA ------------------------- #
 
         attack_used = selectAttack(pokemon1, pokemon2)  # Choisir une attaque en fonction de la faiblesse du pokémon adverse
         damageSingleType(attack_used, pokemon2)
         
         ######## Gain de fitness 
-        fitnessGain(pokemon1, attack_used, pokemon2)
+        fitnessGainAttack(pokemon1, attack_used, pokemon2)
         
         # ------------- Print the description of the attack used with colored pokemon names to the text ------------- #
         # print(f"{bcolors.OKBLUE}{pokemon1.name}{bcolors.ENDC} used {attack_used[1]} attack on {bcolors.OKGREEN}{pokemon2.name}." + bcolors.ENDC)
@@ -175,17 +198,26 @@ def fight(pokemon1, pokemon2):
 
         # ---------------------- Tour du pokémon adverse ------------------------- #
 
-        attack_used = pokemon2.attacks[random.randint(0, NUMBER_OF_ATTACKS-1)]
+        attack_used = selectAttackDefense(pokemon2, pokemon1)  # Choisir une attaque en fonction de la résistance du pokémon adverse
         damageSingleType(attack_used, pokemon1)
+
+        ######## Gain de fitness
+        fitnessGainDefense(pokemon1, attack_used)
         
         # ------------- Print the description of the attack used with colors to the text ------------- #
         # print(f"{bcolors.OKGREEN}{pokemon2.name}{bcolors.ENDC} used {attack_used[1]} attack on {bcolors.OKBLUE}{pokemon1.name}." + bcolors.ENDC)
 
         if pokemon1.hp <= 0:
             # print(f"{bcolors.OKGREEN}{pokemon1.name} fainted!" + bcolors.ENDC)
-            pokemon1.fitness -= 50  # Loss of fitness for being knocked out
+            pokemon1.fitness -= 100  # Loss of fitness for being knocked out
             break
-    
+            
+        if compteur >= 10:
+            pokemon1.fitness -= 20  # Loss of fitness for a long fight
+            break
+
+        compteur += 1
+
     pokemon1.hp = 200  # Reset HP for the next fight
 
     return pokemon1     
@@ -204,14 +236,14 @@ def mutation_type_chart(pokemon):
     pokemon.type_chart = chart
     return pokemon
 
-def crossover(pokemon1, pokemon2):
+def crossover(bestparent, badparent):
     child = simplepokemon()
-    chart1 = pokemon1.type_chart
-    chart2 = pokemon2.type_chart
+    chart1 = bestparent.type_chart
+    chart2 = badparent.type_chart
     for i in range(18):
         for j in range(18):
             r = random.random()
-            if r < 0.5:
+            if r < 0.66:
                 child.type_chart[i][j] = chart1[i][j]
             else:
                 child.type_chart[i][j] = chart2[i][j]
@@ -219,9 +251,14 @@ def crossover(pokemon1, pokemon2):
 
 # Fait combattre une chaque individus d'une génération contre 100 pokémons simples 
 def fight_generation(gen):
-    for i in range(20):
-        for _ in range(500): 
-            fight(gen[i], simplepokemon())
+    for i in range(len(gen)):
+        for j in range(500):
+            gen[i].hp = 200
+            try:
+                fight(gen[i], simplepokemon())
+            except Exception as e:
+                print(f"Erreur pendant le combat {j} du pokemon {i}: {e}")
+                break
 
 
 def tri_individus(gen):
@@ -258,16 +295,12 @@ test4 = simplepokemon()
 test4.type_chart = [[0 for i in range(18)] for i in range(18)]
 """
 
-# Generation = [simplepokemon(name= "Individu : "+str(i+1)) for i in range(20)]
+def caca():
+    genecaca = [simplepokemon() for i in range(20)]
 
-
-
- 
-
-
-
-
-
+    for i in range(len(genecaca)):
+        genecaca[i].name = "P.Diddy"
+    return genecaca
 
 
 

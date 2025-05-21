@@ -66,12 +66,13 @@ def final_save_gen(gen):
             fichier.write(' '.join([str(a) for a in row]) + '\n')
 
         write_pokemon_description(fichier, gen[i])
+        print(f"Création du fichier : stock{i+1}.txt")
 
         fichier.close()
 
     os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
 
-
+save_gen(IA.caca())
 """
 save_ind(IA.test1, "x2.txt")
 save_ind(IA.test2, "x0,5.txt")
