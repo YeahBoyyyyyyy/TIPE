@@ -5,6 +5,7 @@ import donnees
 from Stockage_individus import load
 from Stockage_individus import save
 
+("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Cloud")
 Generation = load.get_generation_from_files()
 
 def selection(gen):
@@ -29,7 +30,7 @@ def evolution(gen, int):
     save.final_save_gen(population)
     os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
 
-#evolution(Generation, 500)
+#evolution(Generation, 10)
 
 """
 for j in range(2):
@@ -57,9 +58,8 @@ os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Final_
 gen = load.get_generation_from_files()
 
 for i in range(len(gen)):
-    print(gen[i].type)
-    print(gen[i].name)
     print(IA.type_chart_evaluation(gen[i]))
 
 pok = IA.simplepokemon()
 print(IA.type_chart_evaluation(pok))
+

@@ -28,7 +28,7 @@ NUMBER_OF_ATTACKS = 4
 ZERO = 0
 HALF = 1/2
 DOUBLE = 2
-MUTATION_CHANCE = 0.00002
+MUTATION_CHANCE = 0.0001
 
 # Choisi un type au hasard parmis les 18 types du jeu
 def randomType():
@@ -71,7 +71,7 @@ def mono_type_attack_effectiveness(offensive_type, defensive_type):
 # Génération d'une table des types totalement aléatoire 
 def generateTypeChart():
     values = [0, 0.5, 1, 2]
-    weights = [0.025, 0.2025, 0.55, 0.20]
+    weights = [0.020, 0.2025, 0.55, 0.20]
 
     matrix = [[random.choices(values, weights)[0] for _ in range(18)] for _ in range(18)]
     
@@ -142,26 +142,23 @@ def selectAttackDefense(pokemon, opponent):
     # Si aucune attaque ne correspond à la faiblesse, choisir une attaque aléatoire
     return pokemon.attacks[random.randint(0, NUMBER_OF_ATTACKS-1)]
 
-#### ESSAYER DE LA FAIRE JOUER CONTRE ELLE MEME C'EST A DIRE UTILISER SA TABLE DES TYPES POUR SE COMBATTRE MAIS CETTE FOIS CI IL FAUT UTILISER
-#### LA CAPACITE LA MOINS EFFICACA. CELA PERMETTRA AUX x0.5 ET x0 DE LA TABLE DES TYPES D'INFLUER SUR LA FITNESS DE L'INDIVIDU
-
 def fitnessGainAttack(pokemon, attack_used, opponent):
     effectivness = mono_type_attack_effectiveness(attack_used[1], opponent.type)
     if effectivness == 2:
-        pokemon.fitness += attack_used[0] * effectivness
+        pokemon.fitness += 150
     elif effectivness == 0.5:
-        pokemon.fitness -= 30
-    elif effectivness == 0:
         pokemon.fitness -= 50
+    elif effectivness == 0:
+        pokemon.fitness -= 100
 
 def fitnessGainDefense(pokemon, attack_used):
     effectivness = mono_type_attack_effectiveness(attack_used[1], pokemon.type)
     if effectivness == 2:
-        pokemon.fitness -= 50
+        pokemon.fitness -= 150
     elif effectivness == 0.5:
-        pokemon.fitness += 30
-    elif effectivness == 0:
         pokemon.fitness += 50
+    elif effectivness == 0:
+        pokemon.fitness += 100
 
 def type_chart_evaluation(pokemon):
     IA_type_chart = pokemon.type_chart
@@ -275,16 +272,34 @@ def new_generation(gen):
     gen[0].fitness = 0
     new_gen.append(gen[0])
     gen.pop(0)
-    for i in range(len(gen)):
+    for i in range(len(gen)-1):
         parent1 = gen[0]
         parent2 = gen[i]
         child = crossover(parent1, parent2)
         child = mutation_type_chart(child)
         child.name = "Individu"
         new_gen.append(child)
+    rdm = simplepokemon()
+    new_gen.append(crossover(rdm,gen[0]))
     return new_gen
 
+# Peut etre separer la table en chunks
+# victoire / degat infligés / degats subis (les traités séparément et mieux définir ce qu'est le cas "1.0")
+
 """
+pok = simplepokemon()
+pok.type_chart = donnees.type_chart
+
+rand = simplepokemon()
+
+for i in range(100):
+    fight(rand, simplepokemon())
+    fight(pok, simplepokemon())
+
+print(f"Fitness du pokémon : {pok.fitness}")
+print(f"Fitness du random : {rand.fitness}")
+
+
 test1 = simplepokemon()
 test1.type_chart = [[2 for i in range(18)] for i in range(18)]
 test2 = simplepokemon()
@@ -293,7 +308,7 @@ test3 = simplepokemon()
 test3.type_chart = [[1 for i in range(18)] for i in range(18)]
 test4 = simplepokemon()
 test4.type_chart = [[0 for i in range(18)] for i in range(18)]
-"""
+
 
 def caca():
     genecaca = [simplepokemon() for i in range(20)]
@@ -302,7 +317,7 @@ def caca():
         genecaca[i].name = "P.Diddy"
     return genecaca
 
-
+"""
 
 
 

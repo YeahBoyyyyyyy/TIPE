@@ -72,7 +72,6 @@ def final_save_gen(gen):
 
     os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
 
-save_gen(IA.caca())
 """
 save_ind(IA.test1, "x2.txt")
 save_ind(IA.test2, "x0,5.txt")

@@ -1,5 +1,4 @@
 import os
-import pygame
 import IATableDesTypes as IA
 from Stockage_individus import load as load
 import tkinter as tk
