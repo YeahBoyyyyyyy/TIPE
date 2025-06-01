@@ -4,6 +4,7 @@ import random
 import donnees
 import os
 from Stockage_individus import load
+import json
 
 class bcolors:
     OKWHITE = '\033[97m'
@@ -24,11 +25,11 @@ class bcolors:
     UNBOLD = '\033[22m'
     UNDERLINE = '\033[4m'
 
-NUMBER_OF_ATTACKS = 4
+NUMBER_OF_ATTACKS = 10
 ZERO = 0
 HALF = 1/2
 DOUBLE = 2
-MUTATION_CHANCE = 0.0001
+MUTATION_CHANCE = 0.001
 
 # Choisi un type au hasard parmis les 18 types du jeu
 def randomType():
@@ -53,10 +54,13 @@ class simplepokemon():
         self.attacks = attacks
         self.fitness = fitness
         self.type_chart = generateTypeChart()
+        self.number_of_damage_taken = 0
+        self.number_of_damage_dealt = 0
+        self.number_of_victories = 0
     def __call__(self):
-        return self.name, self.hp, self.type, self.attacks, self.fitness
+        return self.name, self.hp, self.type, self.attacks, self.fitness, self.number_of_damage_dealt, self.number_of_damage_taken, self.number_of_victories
     def __str__(self): 
-        return f"{self.name} (HP: {self.hp}, Type: {self.type}, Attacks: {self.attacks})"
+        return f"{self.name} (HP: {self.hp}, Type: {self.type}), Fitness: {self.fitness}, Damage Dealt: {self.number_of_damage_dealt}, Damage Taken: {self.number_of_damage_taken}, Victories: {self.number_of_victories})"
  
 
 def damageSingleType(attack_used, pokemon_damaged):
@@ -174,22 +178,25 @@ def fight(pokemon1, pokemon2):
 
     compteur = 0
 
-    while pokemon1.hp > 0 and pokemon2.hp > 0:
+    while pokemon1.hp > 0 and pokemon2.hp > 0 and compteur <= 15:
         
         # ---------------------- Tour du pokémon IA ------------------------- #
 
         attack_used = selectAttack(pokemon1, pokemon2)  # Choisir une attaque en fonction de la faiblesse du pokémon adverse
         damageSingleType(attack_used, pokemon2)
         
-        ######## Gain de fitness 
-        fitnessGainAttack(pokemon1, attack_used, pokemon2)
+        ######## Gain de fitness et gain de damage dealt
+        pokemon1.number_of_damage_dealt += attack_used[0]*mono_type_attack_effectiveness(attack_used[1], pokemon2.type)
+        # fitnessGainAttack(pokemon1, attack_used, pokemon2)
+
         
         # ------------- Print the description of the attack used with colored pokemon names to the text ------------- #
         # print(f"{bcolors.OKBLUE}{pokemon1.name}{bcolors.ENDC} used {attack_used[1]} attack on {bcolors.OKGREEN}{pokemon2.name}." + bcolors.ENDC)
 
         if pokemon2.hp <= 0:
             # print(f"{bcolors.OKBLACK}{pokemon2.name} fainted!" + bcolors.ENDC)
-            pokemon1.fitness += 20  # Gain fitness for knocking out the opponent
+            # pokemon1.fitness += 20  # Gain fitness for knocking out the opponent
+            pokemon1.number_of_victories += 1
             break
 
 
@@ -198,25 +205,23 @@ def fight(pokemon1, pokemon2):
         attack_used = selectAttackDefense(pokemon2, pokemon1)  # Choisir une attaque en fonction de la résistance du pokémon adverse
         damageSingleType(attack_used, pokemon1)
 
-        ######## Gain de fitness
-        fitnessGainDefense(pokemon1, attack_used)
+        ######## Gain de fitness et gain de damage taken
+        pokemon1.number_of_damage_taken += attack_used[0]*mono_type_attack_effectiveness(attack_used[1], pokemon1.type)
+        # fitnessGainDefense(pokemon1, attack_used)
         
         # ------------- Print the description of the attack used with colors to the text ------------- #
         # print(f"{bcolors.OKGREEN}{pokemon2.name}{bcolors.ENDC} used {attack_used[1]} attack on {bcolors.OKBLUE}{pokemon1.name}." + bcolors.ENDC)
 
         if pokemon1.hp <= 0:
             # print(f"{bcolors.OKGREEN}{pokemon1.name} fainted!" + bcolors.ENDC)
-            pokemon1.fitness -= 100  # Loss of fitness for being knocked out
-            break
-            
-        if compteur >= 10:
-            pokemon1.fitness -= 20  # Loss of fitness for a long fight
+            # pokemon1.fitness -= 100  # Loss of fitness for being knocked out
             break
 
         compteur += 1
 
     pokemon1.hp = 200  # Reset HP for the next fight
-
+    pokemon1.type = randomType() # Randomise le type pour pouvoir permettre d'utilliser d'autres attaques après
+    pokemon1.attacks = [simpleAttack() for i in range(NUMBER_OF_ATTACKS)] # randomise les attaques pour faire varier les choix
     return pokemon1     
 
     # Générer une liste de 20 pokémons différents
@@ -233,7 +238,7 @@ def mutation_type_chart(pokemon):
     pokemon.type_chart = chart
     return pokemon
 
-def crossover(bestparent, badparent):
+def crossover(bestparent:simplepokemon, badparent:simplepokemon):
     child = simplepokemon()
     chart1 = bestparent.type_chart
     chart2 = badparent.type_chart
@@ -259,6 +264,8 @@ def fight_generation(gen):
 
 
 def tri_individus(gen):
+    # normalisation de la génération
+    normalize_generation(gen)
     # Trie la génération d'individus par fitness
     n = len(gen)
     for i in range(n):
@@ -266,66 +273,116 @@ def tri_individus(gen):
             if gen[j].fitness < gen[j+1].fitness:
                 gen[j], gen[j+1] = gen[j+1], gen[j]
 
+def tri_individus_en_fonction_de_la_type_chart_directement(gen):
+    n = len(gen)
+    for i in range(n):
+        for j in range(n-i-1):
+            if type_chart_evaluation(gen[j]) < type_chart_evaluation(gen[j+1]):
+                gen[j], gen[j+1] = gen[j+1], gen[j]
+
+
 def new_generation(gen):
     # Crée une nouvelle génération à partir de la génération actuelle
     new_gen = []
     gen[0].fitness = 0
+    gen[1].fitness = 0
+    # On garde les deux meilleurs individus de la génération actuelle
     new_gen.append(gen[0])
+    new_gen.append(gen[1])
     gen.pop(0)
-    for i in range(len(gen)-1):
-        parent1 = gen[0]
-        parent2 = gen[i]
+    gen.pop(0)
+    # On croise les 3/5 meilleurs et un random avec le meilleur, et les 2/5-1 avec le deuxieme 
+    for i in range(int(len(gen) * 0.6)):
+        parent1 = new_gen[0]
+        parent2 = gen[0]
         child = crossover(parent1, parent2)
         child = mutation_type_chart(child)
-        child.name = "Individu"
         new_gen.append(child)
-    rdm = simplepokemon()
-    new_gen.append(crossover(rdm,gen[0]))
+        gen.remove(parent2)
+    for i in range(int(len(gen))):
+        parent1 = new_gen[1]
+        parent2 = gen[0]
+        child = crossover(parent1, parent2)
+        child = mutation_type_chart(child)
+        new_gen.append(child)
+        gen.remove(parent2)
     return new_gen
 
 # Peut etre separer la table en chunks
 # victoire / degat infligés / degats subis (les traités séparément et mieux définir ce qu'est le cas "1.0")
 
+# Création d'un nouveau fitness en fonction des dégâts subits, infligés et du nombre de victoire
+
+
+def normalize_damage_dealts(value, moyenne, SD):
+    if SD == 0:
+        return 0
+    return (value - moyenne) / SD
+
+def normalize_damage_takens(value, moyenne, SD):
+    if SD == 0:
+        return 0
+    return (value - moyenne) / SD
+
+def normalize_nb_victories(value, moyenne, SD):
+    if SD == 0:
+        return 0
+    return (value - moyenne) / SD
+
+def normalize_generation(generation):
+    # Normalise les dégâts infligés, subis et le nombre de victoires
+    damage_dealts = [individu.number_of_damage_dealt for individu in generation]
+    damage_takens = [individu.number_of_damage_taken for individu in generation]
+    nb_victories = [individu.number_of_victories for individu in generation]
+
+    moyenne_damage_dealts = np.mean(damage_dealts)
+    SD_damage_dealts = np.std(damage_dealts)
+
+    moyenne_damage_takens = np.mean(damage_takens)
+    SD_damage_takens = np.std(damage_takens)
+
+    moyenne_nb_victories = np.mean(nb_victories)
+    SD_nb_victories = np.std(nb_victories)
+
+    # Normalisation des dégâts infligés, subis et du nombre de victoires pour former le fitness avec un poids de 0.6 pour les 
+    # dégâts subits, 0,25 pour les victoires et 0.15 pour les dégâts infligés
+    for individu in generation:
+        # Pour les dégâts subis (damage_taken), moins il y en a, mieux c'est, donc on oppose la normalisation
+        individu.fitness = (
+            0.15 * normalize_damage_dealts(individu.number_of_damage_dealt, moyenne_damage_dealts, SD_damage_dealts) +
+            0.6 * -normalize_damage_takens(individu.number_of_damage_taken, moyenne_damage_takens, SD_damage_takens) +
+            0.25 * normalize_nb_victories(individu.number_of_victories, moyenne_nb_victories, SD_nb_victories)
+        )
+
+
+'''
+# ----------------------------------------------------- #
+amogus = simplepokemon()
+pupute = simplepokemon()
+pupute.type_chart = donnees.type_chart
+
+def combats(pokemon,n):
+    for i in range(n):
+        fight(pokemon, simplepokemon())
+
+number = 1000
+
+combats(amogus, number)
+combats(pupute, number)
+
+new_fitness(amogus, number)
+new_fitness(pupute, number)
+
+print(f"{bcolors.OKBLUE}AMOGUS : {bcolors.ENDC}" + str(amogus) + f" {bcolors.OKYELLOW}{str(type_chart_evaluation(amogus))}{bcolors.ENDC} --- {bcolors.OKGREEN}{str(amogus.fitness)}{bcolors.ENDC}")
+print(f"{bcolors.OKBLUE}PUPUTE : {bcolors.ENDC}" + str(pupute) + f" {bcolors.OKYELLOW}{str(type_chart_evaluation(pupute))}{bcolors.ENDC} --- {bcolors.OKGREEN}{str(pupute.fitness)}{bcolors.ENDC}")
+# ----------------------------------------------------- #'''
 """
-pok = simplepokemon()
-pok.type_chart = donnees.type_chart
+groscaca = simplepokemon()
+groscaca.type_chart = donnees.type_chart 
 
-rand = simplepokemon()
-
-for i in range(100):
-    fight(rand, simplepokemon())
-    fight(pok, simplepokemon())
-
-print(f"Fitness du pokémon : {pok.fitness}")
-print(f"Fitness du random : {rand.fitness}")
-
-
-test1 = simplepokemon()
-test1.type_chart = [[2 for i in range(18)] for i in range(18)]
-test2 = simplepokemon()
-test2.type_chart = [[0.5 for i in range(18)] for i in range(18)]
-test3 = simplepokemon()
-test3.type_chart = [[1 for i in range(18)] for i in range(18)]
-test4 = simplepokemon()
-test4.type_chart = [[0 for i in range(18)] for i in range(18)]
-
-
-def caca():
-    genecaca = [simplepokemon() for i in range(20)]
-
-    for i in range(len(genecaca)):
-        genecaca[i].name = "P.Diddy"
-    return genecaca
-
+for i in range(20):
+    combats(groscaca)
 """
-
-
-
-
-
-
-
-
 # Pour la création du choix des capacités par l'IA il faudrait
 # prendre en entrée tous les types du jeu mais les connexions qui seraient créées s'activerait seulement 
 # lorsque le pokémon en face est du type présent sur la connexion

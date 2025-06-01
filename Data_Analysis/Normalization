@@ -1,0 +1,18 @@
+import json
+import numpy as np
+
+with open('datas.json') as json_data:
+    data = json.load(json_data)
+
+
+damage_dealts = data["damage_dealts"]
+perfect_damage_dealts = data["perfect_damage_dealts"]
+child_damage_dealts = data["child_damage_dealts"]
+damage_takens = data["damage_takens"]
+perfect_damage_takens = data["perfect_damage_takens"]
+child_damage_takens = data["child_damage_takens"]
+nb_victories = data["nb_victories"]
+perfect_nb_victories = data["perfect_nb_victories"]
+child_nb_victories = data["child_nb_victories"]
+
+print(len(damage_dealts))

@@ -5,8 +5,7 @@ import donnees
 from Stockage_individus import load
 from Stockage_individus import save
 
-("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Cloud")
-Generation = load.get_generation_from_files()
+Generation = load.get_generation_from_files_final()
 
 def selection(gen):
     # Tri des individus par fitness
@@ -30,7 +29,15 @@ def evolution(gen, int):
     save.final_save_gen(population)
     os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
 
-#evolution(Generation, 10)
+gen = [IA.simplepokemon() for i in range(50)]
+
+#evolution(gen, 100)
+
+#evolution(Generation,800)
+
+for i in range(len(Generation)):
+    print(IA.type_chart_evaluation(Generation[i]))
+    print(Generation[i].name)
 
 """
 for j in range(2):
@@ -53,13 +60,15 @@ for j in range(2):
     print("Nombre d'individus à sauvegarder :", len(Generation))
 
 
-"""
+
 os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Final_Gen")
-gen = load.get_generation_from_files()
+gen = load.get_generation_from_files_final()
 
 for i in range(len(gen)):
+    print(gen[i].name)
     print(IA.type_chart_evaluation(gen[i]))
+    print("------------------------------------------------")
 
 pok = IA.simplepokemon()
 print(IA.type_chart_evaluation(pok))
-
+"""
