@@ -26,12 +26,13 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 NUMBER_OF_ATTACKS = 10
+NUMBER_OF_FIGHT = 3000
 ZERO = 0
 HALF = 1/2
 DOUBLE = 2
-MUTATION_CHANCE = 0.001
+MUTATION_CHANCE = 0.005
 
-# Choisi un type au hasard parmis les 18 types du jeu
+# Choisir un type au hasard parmi les 18 types du jeu
 def randomType():
     return donnees.POKEMON_TYPES[random.randint(0,17)]
 
@@ -226,8 +227,29 @@ def fight(pokemon1, pokemon2):
 
     # Générer une liste de 20 pokémons différents
 
+class EvolutionManager:
+    def __init__(self, mutation_base=0.01, max_no_improve=5, mutation_step=0.002):
+        self.best_fitness = None
+        self.no_improve_count = 0
+        self.mutation_rate = mutation_base
+        self.max_no_improve = max_no_improve
+        self.mutation_step = mutation_step
+        self.min_mutation = 0.002
+        self.max_mutation = 0.3
+
+    def update(self, current_best_fitness):
+        if self.best_fitness is None or current_best_fitness > self.best_fitness:
+            self.best_fitness = current_best_fitness
+            self.no_improve_count = 0
+            self.mutation_rate -= 0.001
+        else:
+            self.no_improve_count += 1
+            if self.no_improve_count >= self.max_no_improve:
+                self.mutation_rate = min(self.mutation_rate + self.mutation_step, self.max_mutation)
+                self.no_improve_count = 0
+
 # Parcours la table des types du pokemon et génère des mutations
-def mutation_type_chart(pokemon):
+def static_mutation_type_chart(pokemon):
     chart = pokemon.type_chart
     L = [0, 0.5, 1, 2]
     for i in range(18):
@@ -238,6 +260,20 @@ def mutation_type_chart(pokemon):
     pokemon.type_chart = chart
     return pokemon
 
+def mutation_type_chart(pokemon, mutation_rate=0.005):
+    chart = pokemon.type_chart
+    L = [0, 0.5, 1, 2]
+    mutated = 0
+    for i in range(18):
+        for j in range(18):
+            if mutated > 15 : break
+            if random.random() <= mutation_rate:
+                chart[i][j] = random.choice(L)
+                mutated += 1
+
+    pokemon.type_chart = chart
+    return pokemon
+
 def crossover(bestparent:simplepokemon, badparent:simplepokemon):
     child = simplepokemon()
     chart1 = bestparent.type_chart
@@ -245,23 +281,22 @@ def crossover(bestparent:simplepokemon, badparent:simplepokemon):
     for i in range(18):
         for j in range(18):
             r = random.random()
-            if r < 0.66:
+            if r < 0.60:
                 child.type_chart[i][j] = chart1[i][j]
             else:
                 child.type_chart[i][j] = chart2[i][j]
     return child
 
-# Fait combattre une chaque individus d'une génération contre 100 pokémons simples 
+# Fait combattre une chaque individus d'une génération contre NB_OF_FIGHT pokémons simples 
 def fight_generation(gen):
     for i in range(len(gen)):
-        for j in range(500):
+        for j in range(NUMBER_OF_FIGHT):
             gen[i].hp = 200
             try:
                 fight(gen[i], simplepokemon())
             except Exception as e:
                 print(f"Erreur pendant le combat {j} du pokemon {i}: {e}")
                 break
-
 
 def tri_individus(gen):
     # normalisation de la génération
@@ -280,40 +315,83 @@ def tri_individus_en_fonction_de_la_type_chart_directement(gen):
             if type_chart_evaluation(gen[j]) < type_chart_evaluation(gen[j+1]):
                 gen[j], gen[j+1] = gen[j+1], gen[j]
 
+def normalize_generation(generation):
+    # Récupérer les valeurs brutes
+    damage_dealts = [ind.number_of_damage_dealt for ind in generation]
+    damage_takens = [ind.number_of_damage_taken for ind in generation]
+    nb_victories = [ind.number_of_victories for ind in generation]
 
-def new_generation(gen):
-    # Crée une nouvelle génération à partir de la génération actuelle
+    # Éviter la division par zéro
+    def min_max(val, min_val, max_val):
+        if max_val - min_val == 0:
+            return 0.0
+        return (val - min_val) / (max_val - min_val)
+
+    # Calcul des min/max
+    min_dealt, max_dealt = min(damage_dealts), max(damage_dealts)
+    min_taken, max_taken = min(damage_takens), max(damage_takens)
+    min_victories, max_victories = min(nb_victories), max(nb_victories)
+
+    # Construction de la fitness normalisée avec les mêmes poids
+    for ind in generation:
+        norm_dealt = min_max(ind.number_of_damage_dealt, min_dealt, max_dealt)
+        norm_taken = min_max(ind.number_of_damage_taken, min_taken, max_taken)
+        norm_victories = min_max(ind.number_of_victories, min_victories, max_victories)
+
+        # Attention : on inverse damage_taken car moins = mieux
+        ind.fitness = (
+            0.20 * norm_dealt +
+            0.5 * (1 - norm_taken) +
+            0.30 * norm_victories
+        )
+
+
+
+
+
+def new_generation(generation, mutation_rate=MUTATION_CHANCE):
+    gen = generation.copy()
+    tri_individus(gen)  # Trie la génération selon le fitness (meilleurs en premier)
     new_gen = []
-    gen[0].fitness = 0
-    gen[1].fitness = 0
-    # On garde les deux meilleurs individus de la génération actuelle
-    new_gen.append(gen[0])
-    new_gen.append(gen[1])
-    gen.pop(0)
-    gen.pop(0)
-    # On croise les 3/5 meilleurs et un random avec le meilleur, et les 2/5-1 avec le deuxieme 
-    for i in range(int(len(gen) * 0.6)):
-        parent1 = new_gen[0]
-        parent2 = gen[0]
+
+    # Élitisme : on garde les deux meilleurs individus sans modification
+    best1 = gen[0]
+    best2 = gen[1]
+    best1.fitness = 0
+    best2.fitness = 0
+    new_gen.append(best1)
+    new_gen.append(best2)
+    gen = gen[2:]
+
+    # Sélection par tournoi : on sélectionne les meilleurs parents pour croisement
+    top_percent = int(len(gen) * 0.3) if len(gen) > 3 else len(gen)
+    parents_pool = gen[:top_percent]
+
+    # Générer des enfants par croisement entre les meilleurs parents (favorise la diversité)
+    while len(new_gen) < len(generation):
+        parent1 = random.choice([best1, best2] + parents_pool)
+        parent2 = random.choice(parents_pool)
+        if parent1 == parent2:
+            parent2 = simplepokemon()  # Diversité si même parent
         child = crossover(parent1, parent2)
-        child = mutation_type_chart(child)
+        child = mutation_type_chart(child, mutation_rate)
         new_gen.append(child)
-        gen.remove(parent2)
-    for i in range(int(len(gen))):
-        parent1 = new_gen[1]
-        parent2 = gen[0]
-        child = crossover(parent1, parent2)
-        child = mutation_type_chart(child)
-        new_gen.append(child)
-        gen.remove(parent2)
-    return new_gen
 
-# Peut etre separer la table en chunks
-# victoire / degat infligés / degats subis (les traités séparément et mieux définir ce qu'est le cas "1.0")
+    # S'assurer que la taille de la génération reste constante
+    return new_gen[:len(generation)]
 
-# Création d'un nouveau fitness en fonction des dégâts subits, infligés et du nombre de victoire
+pupute_gang = [simplepokemon() for _ in range(50)]
 
+fight_generation(pupute_gang)
 
+tri_individus(pupute_gang)
+
+for i in range(len(pupute_gang)):
+   print(f"fitness : {pupute_gang[i].fitness}")
+   print(f"correspondance : {type_chart_evaluation(pupute_gang[i])}")
+   print("-------------------------------------")
+
+"""
 def normalize_damage_dealts(value, moyenne, SD):
     if SD == 0:
         return 0
@@ -353,121 +431,7 @@ def normalize_generation(generation):
             0.6 * -normalize_damage_takens(individu.number_of_damage_taken, moyenne_damage_takens, SD_damage_takens) +
             0.25 * normalize_nb_victories(individu.number_of_victories, moyenne_nb_victories, SD_nb_victories)
         )
-
-
-'''
-# ----------------------------------------------------- #
-amogus = simplepokemon()
-pupute = simplepokemon()
-pupute.type_chart = donnees.type_chart
-
-def combats(pokemon,n):
-    for i in range(n):
-        fight(pokemon, simplepokemon())
-
-number = 1000
-
-combats(amogus, number)
-combats(pupute, number)
-
-new_fitness(amogus, number)
-new_fitness(pupute, number)
-
-print(f"{bcolors.OKBLUE}AMOGUS : {bcolors.ENDC}" + str(amogus) + f" {bcolors.OKYELLOW}{str(type_chart_evaluation(amogus))}{bcolors.ENDC} --- {bcolors.OKGREEN}{str(amogus.fitness)}{bcolors.ENDC}")
-print(f"{bcolors.OKBLUE}PUPUTE : {bcolors.ENDC}" + str(pupute) + f" {bcolors.OKYELLOW}{str(type_chart_evaluation(pupute))}{bcolors.ENDC} --- {bcolors.OKGREEN}{str(pupute.fitness)}{bcolors.ENDC}")
-# ----------------------------------------------------- #'''
-"""
-groscaca = simplepokemon()
-groscaca.type_chart = donnees.type_chart 
-
-for i in range(20):
-    combats(groscaca)
 """
 # Pour la création du choix des capacités par l'IA il faudrait
 # prendre en entrée tous les types du jeu mais les connexions qui seraient créées s'activerait seulement 
 # lorsque le pokémon en face est du type présent sur la connexion
-
-class complexAttack():
-    def __init__(self, name="Null", power=50, attack_type="Normal", category="Physical", effects=None):
-        """
-        Initialize a complex attack.
-        :param name: Name of the attack.
-        :param power: Base power of the attack.
-        :param attack_type: Type of the attack (e.g., "Fire", "Water").
-        :param category: Category of the attack ("Physical" or "Special").
-        :param effects: Dictionary of additional effects (e.g., {"flinch": 0.1, "burn": 0.2}).
-        """
-        self.name = name
-        self.power = power
-        self.attack_type = attack_type
-        self.category = category
-        self.effects = effects if effects else {}
-
-    def apply_effects(self, target):
-        """
-        Apply effects of the attack to the target.
-        :param target: The target Pokémon.
-        """
-        for effect, probability in self.effects.items():
-            if random.random() < probability:
-                if effect == "flinch":
-                    target.flinched = True
-                elif effect == "burn":
-                    target.status = "Burned"
-                elif effect == "paralyze":
-                    target.status = "Paralyzed"
-                elif effect == "heal":
-                    target.hp = min(target.hp + self.power // 2, 200)  # Heal up to half the power, max HP is 200
-                # Add more effects as needed
-
-    def __call__(self):
-        return self.name, self.power, self.attack_type, self.category, self.effects
-
-def stab_attack(attack_used, pokemon):
-    r = 1
-    if attack_used[1] == pokemon.type:
-        r = 1.5
-    return r
-
-class complexpokemon():
-    def __init__(self, name="Null", hp=200, type=randomType(), attacks=[simpleAttack() for i in range(NUMBER_OF_ATTACKS)], abilities=[], level=1, experience=0, stats=None, status=None, nature=None, held_item=None):
-        """
-        Initialize a complex Pokémon with various attributes.
-        :param name: Name of the Pokémon.
-        :param hp: Hit points of the Pokémon.
-        :param type: Type of the Pokémon.
-        :param attacks: List of attacks the Pokémon can use.
-        :param abilities: List of abilities the Pokémon has.
-        :param level: Level of the Pokémon.
-        :param experience: Experience points of the Pokémon.
-        :param stats: Dictionary of stats (e.g., {"attack": 50, "defense": 40, "speed": 60}).
-        :param status: Current status condition (e.g., "Burned", "Paralyzed").
-        :param nature: Nature of the Pokémon (e.g., "Adamant", "Timid").
-        :param held_item: Item the Pokémon is holding.
-        """
-        self.name = name
-        self.hp = hp
-        self.type = type
-        self.attacks = attacks
-        self.abilities = abilities
-        self.level = level
-        self.experience = experience
-        self.stats = stats if stats else {"attack": 50, "defense": 50, "speed": 50, "special_attack": 50, "special_defense": 50}
-        self.status = status
-        self.nature = nature
-        self.held_item = held_item
-
-    def __call__(self):
-        return {
-            "name": self.name,
-            "hp": self.hp,
-            "type": self.type,
-            "attacks": self.attacks,
-            "abilities": self.abilities,
-            "level": self.level,
-            "experience": self.experience,
-            "stats": self.stats,
-            "status": self.status,
-            "nature": self.nature,
-            "held_item": self.held_item,
-        }

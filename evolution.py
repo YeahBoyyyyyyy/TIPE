@@ -4,8 +4,12 @@ import os
 import donnees 
 from Stockage_individus import load
 from Stockage_individus import save
+import pandas as pd
+import matplotlib.pyplot as plt
 
-Generation = load.get_generation_from_files_final()
+GenCloud = load.get_generation_from_files()
+POP_SIZE = 50
+N_GENERATIONS = 200
 
 def selection(gen):
     # Tri des individus par fitness
@@ -29,46 +33,59 @@ def evolution(gen, int):
     save.final_save_gen(population)
     os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
 
-gen = [IA.simplepokemon() for i in range(50)]
+generation = [IA.simplepokemon() for _ in range(POP_SIZE)]
+historique = []
 
-#evolution(gen, 100)
+def selection_evolution(gen):
 
-#evolution(Generation,800)
+    population = gen
+    evo = IA.EvolutionManager(mutation_base=0.004)
 
-for i in range(len(Generation)):
-    print(IA.type_chart_evaluation(Generation[i]))
-    print(Generation[i].name)
+    # Suivi
+    for g in range(N_GENERATIONS):
+        print("--------------------------GENERATION " + str(g) + "--------------------------")
+        IA.fight_generation(population)
+        IA.tri_individus(population)
+        
+        fitness_max = population[0].fitness
+        fitness_moy = sum(ind.fitness for ind in population) / len(population)
 
-"""
-for j in range(2):
-    IA.fight_generation(Generation)
-    #for i in range(20):
-     #   print(Generation[i]())
+        print(f"Génération {g} - Fitness max : {fitness_max:.2f} | Moyenne : {fitness_moy:.2f} | Mutation : {evo.mutation_rate:.3f}")
 
-    IA.tri_individus(Generation)
+        historique.append({
+            "generation": g,
+            "fitness_max": fitness_max,
+            "fitness_moy": fitness_moy,
+            "mutation_rate": evo.mutation_rate
+    })
+    
+        evo.update(fitness_max)
+        population = IA.new_generation(population, mutation_rate=evo.mutation_rate)
 
-    print(f"-------------------------------TRI GENERATION {j}-------------------------------")
-    #for i in range(20):
-     #   print(Generation[i]())
+    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Final_Gen")
+    save.final_save_gen(population)
+    os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
 
-    Generation = IA.new_generation(Generation)
+selection_evolution(generation)
 
-    print(f"-------------------------------NOUVELLE GENERATION {j}-------------------------------")
-
-    for i in range(len(Generation)):
-        print(Generation[i]())
-    print("Nombre d'individus à sauvegarder :", len(Generation))
-
-
-
-os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Final_Gen")
 gen = load.get_generation_from_files_final()
 
 for i in range(len(gen)):
-    print(gen[i].name)
     print(IA.type_chart_evaluation(gen[i]))
-    print("------------------------------------------------")
 
-pok = IA.simplepokemon()
-print(IA.type_chart_evaluation(pok))
-"""
+
+df_historique = pd.DataFrame(historique)
+
+plt.figure(figsize=(12, 6))
+plt.plot(df_historique["generation"], df_historique["fitness_max"], label="Fitness max", color="blue")
+plt.plot(df_historique["generation"], df_historique["fitness_moy"], label="Fitness moyenne", color="green")
+plt.plot(df_historique["generation"], df_historique["mutation_rate"], label="Taux de mutation", color="orange", linestyle='--')
+
+plt.title("Évolution de la fitness et du taux de mutation")
+plt.xlabel("Génération")
+plt.ylabel("Valeurs")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.savefig("courbe_evolution.png")
+plt.show()
