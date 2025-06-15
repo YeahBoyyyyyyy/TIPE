@@ -1,10 +1,28 @@
 import os
-import IATableDesTypes as IA
+# import IATableDesTypes as IA
 from Stockage_individus import load as load
 import tkinter as tk
 from tkinter import Canvas, PhotoImage
 from PIL import Image, ImageTk
 import donnees
+
+class simplepokemon():
+    def __init__(self, name="Null", hp=200, type=None, attacks=None, fitness=0):
+        
+        self.name = name
+        self.hp = hp
+        self.type = type
+        self.attacks = attacks
+        self.fitness = fitness
+        self.type_chart = donnees.type_chart  # Utilisation du type chart de donnees.py
+        self.number_of_damage_taken = 0
+        self.number_of_damage_dealt = 0
+        self.number_of_victories = 0
+    def __call__(self):
+        return self.name, self.hp, self.type, self.attacks, self.fitness, self.number_of_damage_dealt, self.number_of_damage_taken, self.number_of_victories
+    def __str__(self): 
+        return f"{self.name} (HP: {self.hp}, Type: {self.type}), Fitness: {self.fitness}, Damage Dealt: {self.number_of_damage_dealt}, Damage Taken: {self.number_of_damage_taken}, Victories: {self.number_of_victories})"
+ 
 
 ''' Programme avec pygame 
 os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus")
@@ -162,7 +180,7 @@ def type_chart(chart,canvas):
             idx = get_multiplier_index(val)
             canvas.create_rectangle(col, row, col + rect_pattern_width, row + rect_pattern_height, fill=rect_colors[idx], outline="#222")
             canvas.create_text(col + 21, row + 14, text=multiplier_text[idx], fill=multiplier_colors[idx], font=("Arial", 10, "bold"))
-
+'''
 def manual_mutation():
     # Fenêtre pour demander l'indice du pokémon à muter
     popup = tk.Toplevel(window)
@@ -221,8 +239,8 @@ def manual_crossover():
             popup.destroy()
 
     tk.Button(popup, text="Croiser", command=do_crossover).pack(pady=10)
-
-pokemon_basic_type_chart = IA.simplepokemon()
+'''
+pokemon_basic_type_chart = simplepokemon()
 pokemon_basic_type_chart.type_chart = donnees.type_chart
 
 #### -------------------------------Fenêtre Tkinter------------------------------- ####
@@ -263,6 +281,7 @@ for i, fichier in enumerate(fichiers):
         button.grid(row=i, column=0, padx=10, pady=10)
     buttons.append(button)
 
+"""
 mutate_button = tk.Button(window, text="Muter", command=lambda: manual_mutation())
 mutate_button.grid(row=0, column=5, padx=20, pady=10, sticky="ne")
 
@@ -271,7 +290,11 @@ crossover_button.grid(row=2, column=5, padx=20, pady=10, sticky="ne")
 
 test = tk.Button(window, text="Test", command = lambda: remove_button(crossover_button))
 test.grid(row=1, column=5, padx=20, pady=10, sticky="ne")
-# Comment enlever un bouton de l'affichage ?
+
+"""
+# afficher pokemon_basic_type_chart
+pokemon_button = tk.Button(window, text="Pokémon de base", command=lambda: create_table_type_window_from_pokemon(pokemon_basic_type_chart))
+pokemon_button.grid(row=0, column=6, padx=10, pady=10)
 
 
 window.mainloop()

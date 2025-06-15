@@ -1,14 +1,13 @@
 import IATableDesTypes as IA
 import numpy as np
 import os
-import donnees 
 from Stockage_individus import load
 from Stockage_individus import save
 import pandas as pd
 import matplotlib.pyplot as plt
 
 GenCloud = load.get_generation_from_files()
-POP_SIZE = 50
+POP_SIZE = 100
 N_GENERATIONS = 200
 
 def selection(gen):
@@ -24,9 +23,9 @@ def evolution(gen, int):
 
     population = gen
 
-    for i in range(int):
-        print("--------------------------GENERATION " + str(i) + "--------------------------")
-        IA.fight_generation(population)
+    for k in range(int):
+        print("--------------------------GENERATION " + str(k) + "--------------------------")
+        IA.fight_generation(population, k)
         population = selection(population)
         
     os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Final_Gen")
@@ -39,34 +38,70 @@ historique = []
 def selection_evolution(gen):
 
     population = gen
-    evo = IA.EvolutionManager(mutation_base=0.004)
+
+    IA.fight_generation(population)
+
+    improve = 0
+    nb_of_no_improve = 0
+    chance_mutation = IA.MUTATION_CHANCE
 
     # Suivi
     for g in range(N_GENERATIONS):
         print("--------------------------GENERATION " + str(g) + "--------------------------")
-        IA.fight_generation(population)
         IA.tri_individus(population)
-        
-        fitness_max = population[0].fitness
-        fitness_moy = sum(ind.fitness for ind in population) / len(population)
 
-        print(f"Génération {g} - Fitness max : {fitness_max:.2f} | Moyenne : {fitness_moy:.2f} | Mutation : {evo.mutation_rate:.3f}")
+        fitness_max = population[0].fitness
+
+        c = [IA.type_chart_evaluation(population[i]) for i in range(len(population))]
+        correspondance_max = max(c)
+
+        correspondance_premier = IA.type_chart_evaluation(population[0])
+        correspondance_deuxieme = IA.type_chart_evaluation(population[1])
+
+        new_improve = np.mean([correspondance_deuxieme, correspondance_premier])
+
+        if g == 0:
+            pass
+        else:
+            if new_improve <= improve:
+                nb_of_no_improve += 1
+            else:
+                improve = new_improve
+                nb_of_no_improve = 0
+
+        if nb_of_no_improve > 6:
+            chance_mutation = IA.MUTATION_CHANCE
+        elif nb_of_no_improve > 4:
+            chance_mutation = 0.04
+        elif nb_of_no_improve > 3:
+            chance_mutation = 0.02
+        else:
+            chance_mutation = IA.MUTATION_CHANCE
+
+        
+
+        print(f"Correspondance_max : {round(correspondance_max, 4)} | Correspondance : 1er : {round(correspondance_premier, 4)} | 2e : {round(correspondance_deuxieme, 4)} - Génération {g} -  Mutation : {chance_mutation} - NB of no improve : {nb_of_no_improve} - Improve : {round(improve, 4)}")
 
         historique.append({
             "generation": g,
-            "fitness_max": fitness_max,
-            "fitness_moy": fitness_moy,
-            "mutation_rate": evo.mutation_rate
+            "correspondance_max": correspondance_max,
+            "correspondance_premier": correspondance_premier,
+            "mutation_rate": chance_mutation
     })
     
-        evo.update(fitness_max)
-        population = IA.new_generation(population, mutation_rate=evo.mutation_rate)
+        population = IA.new_generation(population, chance_mutation)
+
+        # La génération recombat
+        IA.fight_generation(population)
 
     os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus/Final_Gen")
     save.final_save_gen(population)
     os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
 
 selection_evolution(generation)
+
+# Pour éviter que les individus stagent trop il faudrait augmenter le taux de mutation si la fitness stagne pendant 
+# environ 5 générations, on le change beaucoup pour la génération suivante afin de récréer de la disparité parmi les individus
 
 gen = load.get_generation_from_files_final()
 
@@ -77,8 +112,8 @@ for i in range(len(gen)):
 df_historique = pd.DataFrame(historique)
 
 plt.figure(figsize=(12, 6))
-plt.plot(df_historique["generation"], df_historique["fitness_max"], label="Fitness max", color="blue")
-plt.plot(df_historique["generation"], df_historique["fitness_moy"], label="Fitness moyenne", color="green")
+plt.plot(df_historique["generation"], df_historique["correspondance_max"], label="Correspondance max", color="blue")
+plt.plot(df_historique["generation"], df_historique["correspondance_premier"], label="Correspondance Permier", color="green")
 plt.plot(df_historique["generation"], df_historique["mutation_rate"], label="Taux de mutation", color="orange", linestyle='--')
 
 plt.title("Évolution de la fitness et du taux de mutation")

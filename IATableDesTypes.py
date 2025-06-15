@@ -25,8 +25,8 @@ class bcolors:
     UNBOLD = '\033[22m'
     UNDERLINE = '\033[4m'
 
-NUMBER_OF_ATTACKS = 10
-NUMBER_OF_FIGHT = 3000
+NUMBER_OF_ATTACKS = 12
+NUMBER_OF_FIGHT = 5000
 ZERO = 0
 HALF = 1/2
 DOUBLE = 2
@@ -82,14 +82,21 @@ def generateTypeChart():
     
     return matrix
 
-# les inputs seraient : 
-# - les types du pokémon en face 
-# - Les attaques du pokémon joué : type et puissance
-# - Pas encore le type du pokémon joué (on ne considère pas le STAB encore)
+def generateTypeChartCustomAccuracy(accuracy):
 
-#Pour l'IA sur la table des types, il faudrait générer une génération de pokémon (avec une capacité ?),
+    values = [0, 0.5, 1, 2]
+    weights = [0.020, 0.2025, 0.55, 0.20]
 
-## Foncion pour faire combattre un pokémon contre un autre pokémon
+    matrix = [[0 for _ in range(18)] for _ in range(18)]
+
+    for i in range(18):
+        for j in range(18):
+            if random.random() > accuracy:
+                matrix[i][j] = random.choices(values, weights)[0]
+            else:
+                matrix[i][j] = donnees.type_chart[i][j]  # Utiliser la table de types originale pour une précision donnée
+        
+    return matrix
 
 def simplePokemonWeakness(pokemon, typechart):
     type = pokemon.type
@@ -190,10 +197,6 @@ def fight(pokemon1, pokemon2):
         pokemon1.number_of_damage_dealt += attack_used[0]*mono_type_attack_effectiveness(attack_used[1], pokemon2.type)
         # fitnessGainAttack(pokemon1, attack_used, pokemon2)
 
-        
-        # ------------- Print the description of the attack used with colored pokemon names to the text ------------- #
-        # print(f"{bcolors.OKBLUE}{pokemon1.name}{bcolors.ENDC} used {attack_used[1]} attack on {bcolors.OKGREEN}{pokemon2.name}." + bcolors.ENDC)
-
         if pokemon2.hp <= 0:
             # print(f"{bcolors.OKBLACK}{pokemon2.name} fainted!" + bcolors.ENDC)
             # pokemon1.fitness += 20  # Gain fitness for knocking out the opponent
@@ -209,12 +212,8 @@ def fight(pokemon1, pokemon2):
         ######## Gain de fitness et gain de damage taken
         pokemon1.number_of_damage_taken += attack_used[0]*mono_type_attack_effectiveness(attack_used[1], pokemon1.type)
         # fitnessGainDefense(pokemon1, attack_used)
-        
-        # ------------- Print the description of the attack used with colors to the text ------------- #
-        # print(f"{bcolors.OKGREEN}{pokemon2.name}{bcolors.ENDC} used {attack_used[1]} attack on {bcolors.OKBLUE}{pokemon1.name}." + bcolors.ENDC)
 
         if pokemon1.hp <= 0:
-            # print(f"{bcolors.OKGREEN}{pokemon1.name} fainted!" + bcolors.ENDC)
             # pokemon1.fitness -= 100  # Loss of fitness for being knocked out
             break
 
@@ -225,10 +224,9 @@ def fight(pokemon1, pokemon2):
     pokemon1.attacks = [simpleAttack() for i in range(NUMBER_OF_ATTACKS)] # randomise les attaques pour faire varier les choix
     return pokemon1     
 
-    # Générer une liste de 20 pokémons différents
 
 class EvolutionManager:
-    def __init__(self, mutation_base=0.01, max_no_improve=5, mutation_step=0.002):
+    def __init__(self, mutation_base=0.01, max_no_improve=2, mutation_step=0.003):
         self.best_fitness = None
         self.no_improve_count = 0
         self.mutation_rate = mutation_base
@@ -244,6 +242,7 @@ class EvolutionManager:
             self.mutation_rate -= 0.001
         else:
             self.no_improve_count += 1
+            self.mutation_rate -= 0.001
             if self.no_improve_count >= self.max_no_improve:
                 self.mutation_rate = min(self.mutation_rate + self.mutation_step, self.max_mutation)
                 self.no_improve_count = 0
@@ -260,7 +259,7 @@ def static_mutation_type_chart(pokemon):
     pokemon.type_chart = chart
     return pokemon
 
-def mutation_type_chart(pokemon, mutation_rate=0.005):
+def mutation_type_chart(pokemon, mutation_rate=MUTATION_CHANCE):
     chart = pokemon.type_chart
     L = [0, 0.5, 1, 2]
     mutated = 0
@@ -270,7 +269,6 @@ def mutation_type_chart(pokemon, mutation_rate=0.005):
             if random.random() <= mutation_rate:
                 chart[i][j] = random.choice(L)
                 mutated += 1
-
     pokemon.type_chart = chart
     return pokemon
 
@@ -297,6 +295,7 @@ def fight_generation(gen):
             except Exception as e:
                 print(f"Erreur pendant le combat {j} du pokemon {i}: {e}")
                 break
+        print(f"combat terminé pour le pokemon : {i}", end="\r")
 
 def tri_individus(gen):
     # normalisation de la génération
@@ -340,16 +339,12 @@ def normalize_generation(generation):
 
         # Attention : on inverse damage_taken car moins = mieux
         ind.fitness = (
-            0.20 * norm_dealt +
-            0.5 * (1 - norm_taken) +
-            0.30 * norm_victories
+            0.1 * norm_dealt +
+            0.6 * (1 - norm_taken) +
+            0.3 * norm_victories
         )
 
-
-
-
-
-def new_generation(generation, mutation_rate=MUTATION_CHANCE):
+def new_generation(generation, mutation):
     gen = generation.copy()
     tri_individus(gen)  # Trie la génération selon le fitness (meilleurs en premier)
     new_gen = []
@@ -357,81 +352,90 @@ def new_generation(generation, mutation_rate=MUTATION_CHANCE):
     # Élitisme : on garde les deux meilleurs individus sans modification
     best1 = gen[0]
     best2 = gen[1]
-    best1.fitness = 0
-    best2.fitness = 0
     new_gen.append(best1)
     new_gen.append(best2)
     gen = gen[2:]
 
     # Sélection par tournoi : on sélectionne les meilleurs parents pour croisement
-    top_percent = int(len(gen) * 0.3) if len(gen) > 3 else len(gen)
+    top_percent = int(len(gen) * 0.3) if len(gen) > 2 else len(gen)
     parents_pool = gen[:top_percent]
+    gen = gen[top_percent:]  # On retire les meilleurs parents de la génération
 
     # Générer des enfants par croisement entre les meilleurs parents (favorise la diversité)
-    while len(new_gen) < len(generation):
-        parent1 = random.choice([best1, best2] + parents_pool)
+    while len(new_gen) < len(generation)*0.6:  # On vise à créer 90% de la génération
+        parent1 = random.choice([best1, best2] + parents_pool[:len(parents_pool)//4])
         parent2 = random.choice(parents_pool)
         if parent1 == parent2:
             parent2 = simplepokemon()  # Diversité si même parent
         child = crossover(parent1, parent2)
-        child = mutation_type_chart(child, mutation_rate)
+        child = mutation_type_chart(child, mutation)                        # mutation_type_chart(child, mutation_rate)
         new_gen.append(child)
+
+    while len(new_gen) < len(generation) * 0.9:  # On vise à créer 90% de la génération
+        parent1 = random.choice([best1, best2] + parents_pool[:len(parents_pool)//4])
+        parent2 = random.choice(gen) # On prend un parent aléatoire de la génération restante
+        child = crossover(parent1, parent2)
+        child = mutation_type_chart(child, mutation)                         # mutation_type_chart(child, mutation_rate)
+        new_gen.append(child)
+
+    # Compléter la génération avec des individus aléatoires si nécessaire
+    while len(new_gen) < len(generation):
+        new_gen.append(simplepokemon())
+
+    for i in range(len(new_gen)):
+        new_gen[i].fitness = 0  # Réinitialiser la fitness des nouveaux individus
 
     # S'assurer que la taille de la génération reste constante
     return new_gen[:len(generation)]
 
+'''
 pupute_gang = [simplepokemon() for _ in range(50)]
-
-fight_generation(pupute_gang)
-
-tri_individus(pupute_gang)
+    
+compteur = 16
+accuracies = []
 
 for i in range(len(pupute_gang)):
-   print(f"fitness : {pupute_gang[i].fitness}")
-   print(f"correspondance : {type_chart_evaluation(pupute_gang[i])}")
-   print("-------------------------------------")
+    eval = type_chart_evaluation(pupute_gang[i])
+    while  eval < compteur*0.02-0.02 or eval > compteur*0.02+0.02:
+        pupute_gang[i].type_chart = generateTypeChartCustomAccuracy(0.02*i)
+        eval = type_chart_evaluation(pupute_gang[i]) # Générer une table des types avec une précision de 50%
+        print(i, eval, f"compteur : {compteur}", end="\r")
+    accuracies.append(i*0.02)
+    compteur += 0.7
 
-"""
-def normalize_damage_dealts(value, moyenne, SD):
-    if SD == 0:
-        return 0
-    return (value - moyenne) / SD
+for i in range(len(pupute_gang)):
+    print(f"pokemon {i} : correspondance : {type_chart_evaluation(pupute_gang[i])}")
 
-def normalize_damage_takens(value, moyenne, SD):
-    if SD == 0:
-        return 0
-    return (value - moyenne) / SD
+fight_generation(pupute_gang)
+tri_individus(pupute_gang)
+list.reverse(pupute_gang)
 
-def normalize_nb_victories(value, moyenne, SD):
-    if SD == 0:
-        return 0
-    return (value - moyenne) / SD
+import matplotlib.pyplot as plt
+# Tracer la fitness en fonction de l'accuracy de la table
 
-def normalize_generation(generation):
-    # Normalise les dégâts infligés, subis et le nombre de victoires
-    damage_dealts = [individu.number_of_damage_dealt for individu in generation]
-    damage_takens = [individu.number_of_damage_taken for individu in generation]
-    nb_victories = [individu.number_of_victories for individu in generation]
+fitness_values = [p.fitness for p in pupute_gang]
+correspondances = [type_chart_evaluation(p) for p in pupute_gang]
 
-    moyenne_damage_dealts = np.mean(damage_dealts)
-    SD_damage_dealts = np.std(damage_dealts)
+plt.figure(figsize=(8, 5))
+plt.plot(fitness_values, correspondances, marker='o')
+plt.xlabel("Fitness normalisée")
+plt.ylabel("Correspondance à la table des types")
+plt.title("Correspondance à la table des types en fonction de la fitness")
+plt.grid(True)
+plt.show()
 
-    moyenne_damage_takens = np.mean(damage_takens)
-    SD_damage_takens = np.std(damage_takens)
 
-    moyenne_nb_victories = np.mean(nb_victories)
-    SD_nb_victories = np.std(nb_victories)
+import matplotlib.pyplot as plt
 
-    # Normalisation des dégâts infligés, subis et du nombre de victoires pour former le fitness avec un poids de 0.6 pour les 
-    # dégâts subits, 0,25 pour les victoires et 0.15 pour les dégâts infligés
-    for individu in generation:
-        # Pour les dégâts subis (damage_taken), moins il y en a, mieux c'est, donc on oppose la normalisation
-        individu.fitness = (
-            0.15 * normalize_damage_dealts(individu.number_of_damage_dealt, moyenne_damage_dealts, SD_damage_dealts) +
-            0.6 * -normalize_damage_takens(individu.number_of_damage_taken, moyenne_damage_takens, SD_damage_takens) +
-            0.25 * normalize_nb_victories(individu.number_of_victories, moyenne_nb_victories, SD_nb_victories)
-        )
-"""
-# Pour la création du choix des capacités par l'IA il faudrait
-# prendre en entrée tous les types du jeu mais les connexions qui seraient créées s'activerait seulement 
-# lorsque le pokémon en face est du type présent sur la connexion
+# Afficher la correspondance (type_chart_evaluation) de chaque pokemon en fonction de l'accuracy assignée
+
+evaluations = [type_chart_evaluation(p) for p in pupute_gang]
+
+plt.figure(figsize=(8, 5))
+plt.plot(accuracies, evaluations, marker='o')
+plt.xlabel("Accuracy assignée")
+plt.ylabel("Type Chart Evaluation")
+plt.title("Évaluation de la table des types en fonction de l'accuracy assignée")
+plt.grid(True)
+plt.show()
+'''    

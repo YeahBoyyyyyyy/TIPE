@@ -2,7 +2,6 @@ import sys
 import os
 sys.path.append("C:/Users/natha/OneDrive/Desktop/Travail/TIPE")
 import IATableDesTypes as IA
-import donnees
 import numpy as np
 
 def write_pokemon_description(file, pokemon):
