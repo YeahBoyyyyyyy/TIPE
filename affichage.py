@@ -23,6 +23,10 @@ class simplepokemon():
     def __str__(self): 
         return f"{self.name} (HP: {self.hp}, Type: {self.type}), Fitness: {self.fitness}, Damage Dealt: {self.number_of_damage_dealt}, Damage Taken: {self.number_of_damage_taken}, Victories: {self.number_of_victories})"
  
+def randomTypeChart():
+    import random
+    type_chart = [[random.choices([0, 0.5, 2, 1], weights=[0.05, 0.2, 0.2, 0.55])[0] for _ in range(18)] for _ in range(18)]
+    return type_chart
 
 ''' Programme avec pygame 
 os.chdir("C:/Users/natha/OneDrive/Desktop/Travail/TIPE/Stockage_individus")
@@ -241,7 +245,9 @@ def manual_crossover():
     tk.Button(popup, text="Croiser", command=do_crossover).pack(pady=10)
 '''
 pokemon_basic_type_chart = simplepokemon()
-pokemon_basic_type_chart.type_chart = donnees.type_chart
+
+pokemmon_random_type_chart = simplepokemon()
+pokemmon_random_type_chart.type_chart = randomTypeChart()
 
 #### -------------------------------Fenêtre Tkinter------------------------------- ####
 
@@ -295,6 +301,9 @@ test.grid(row=1, column=5, padx=20, pady=10, sticky="ne")
 # afficher pokemon_basic_type_chart
 pokemon_button = tk.Button(window, text="Pokémon de base", command=lambda: create_table_type_window_from_pokemon(pokemon_basic_type_chart))
 pokemon_button.grid(row=0, column=6, padx=10, pady=10)
+
+pokemon_button2 = tk.Button(window, text="Pokémon aléatoire", command=lambda: create_table_type_window_from_pokemon(pokemmon_random_type_chart))
+pokemon_button2.grid(row=1, column=6, padx=10, pady=10)
 
 
 window.mainloop()

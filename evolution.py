@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 GenCloud = load.get_generation_from_files()
-POP_SIZE = 100
+POP_SIZE = 125
 N_GENERATIONS = 200
 
 def selection(gen):
@@ -50,8 +50,6 @@ def selection_evolution(gen):
         print("--------------------------GENERATION " + str(g) + "--------------------------")
         IA.tri_individus(population)
 
-        fitness_max = population[0].fitness
-
         c = [IA.type_chart_evaluation(population[i]) for i in range(len(population))]
         correspondance_max = max(c)
 
@@ -69,12 +67,12 @@ def selection_evolution(gen):
                 improve = new_improve
                 nb_of_no_improve = 0
 
-        if nb_of_no_improve > 6:
+        if nb_of_no_improve > 7:
             chance_mutation = IA.MUTATION_CHANCE
-        elif nb_of_no_improve > 4:
-            chance_mutation = 0.04
-        elif nb_of_no_improve > 3:
-            chance_mutation = 0.02
+        elif nb_of_no_improve > 6:
+            chance_mutation = 0.03
+        elif nb_of_no_improve > 5 :
+            chance_mutation = 0.01
         else:
             chance_mutation = IA.MUTATION_CHANCE
 
